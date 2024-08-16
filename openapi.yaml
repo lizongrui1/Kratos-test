@@ -3,28 +3,27 @@
 
 openapi: 3.0.3
 info:
-    title: ""
+    title: Student API
     version: 0.0.1
 paths:
-    /helloworld/{name}:
-        get:
+    /student/user:
+        post:
             tags:
-                - Greeter
-            description: Sends a greeting
-            operationId: Greeter_SayHello
-            parameters:
-                - name: name
-                  in: path
-                  required: true
-                  schema:
-                    type: string
+                - Student
+            operationId: Student_CreateStudent
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.student.v1.CreateStudentRequest'
+                required: true
             responses:
                 "200":
                     description: OK
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/helloworld.v1.HelloReply'
+                                $ref: '#/components/schemas/api.student.v1.CreateStudentReply'
     /student/{id}:
         get:
             tags:
@@ -46,6 +45,16 @@ paths:
                                 $ref: '#/components/schemas/api.student.v1.GetStudentReply'
 components:
     schemas:
+        api.student.v1.CreateStudentReply:
+            type: object
+            properties:
+                Student:
+                    $ref: '#/components/schemas/api.student.v1.StudentInfo'
+        api.student.v1.CreateStudentRequest:
+            type: object
+            properties:
+                name:
+                    type: string
         api.student.v1.GetStudentReply:
             type: object
             properties:
@@ -57,13 +66,16 @@ components:
                 id:
                     type: integer
                     format: int32
-        helloworld.v1.HelloReply:
+        api.student.v1.StudentInfo:
             type: object
             properties:
-                message:
+                name:
                     type: string
-            description: The response message containing the greetings
+                status:
+                    type: integer
+                    format: int32
+                id:
+                    type: integer
+                    format: int32
 tags:
-    - name: Greeter
-      description: The greeting service definition.
     - name: Student

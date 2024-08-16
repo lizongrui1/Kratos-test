@@ -19,15 +19,18 @@ var _ = binding.EncodeURL
 
 const _ = http.SupportPackageIsVersion1
 
+const OperationStudentCreateStudent = "/api.student.v1.Student/CreateStudent"
 const OperationStudentGetStudent = "/api.student.v1.Student/GetStudent"
 
 type StudentHTTPServer interface {
+	CreateStudent(context.Context, *CreateStudentRequest) (*CreateStudentReply, error)
 	GetStudent(context.Context, *GetStudentRequest) (*GetStudentReply, error)
 }
 
 func RegisterStudentHTTPServer(s *http.Server, srv StudentHTTPServer) {
 	r := s.Route("/")
 	r.GET("/student/{id}", _Student_GetStudent0_HTTP_Handler(srv))
+	r.POST("/student/user", _Student_CreateStudent0_HTTP_Handler(srv))
 }
 
 func _Student_GetStudent0_HTTP_Handler(srv StudentHTTPServer) func(ctx http.Context) error {
@@ -52,7 +55,30 @@ func _Student_GetStudent0_HTTP_Handler(srv StudentHTTPServer) func(ctx http.Cont
 	}
 }
 
+func _Student_CreateStudent0_HTTP_Handler(srv StudentHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in CreateStudentRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationStudentCreateStudent)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.CreateStudent(ctx, req.(*CreateStudentRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*CreateStudentReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type StudentHTTPClient interface {
+	CreateStudent(ctx context.Context, req *CreateStudentRequest, opts ...http.CallOption) (rsp *CreateStudentReply, err error)
 	GetStudent(ctx context.Context, req *GetStudentRequest, opts ...http.CallOption) (rsp *GetStudentReply, err error)
 }
 
@@ -62,6 +88,19 @@ type StudentHTTPClientImpl struct {
 
 func NewStudentHTTPClient(client *http.Client) StudentHTTPClient {
 	return &StudentHTTPClientImpl{client}
+}
+
+func (c *StudentHTTPClientImpl) CreateStudent(ctx context.Context, in *CreateStudentRequest, opts ...http.CallOption) (*CreateStudentReply, error) {
+	var out CreateStudentReply
+	pattern := "/student/user"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationStudentCreateStudent))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 func (c *StudentHTTPClientImpl) GetStudent(ctx context.Context, in *GetStudentRequest, opts ...http.CallOption) (*GetStudentReply, error) {

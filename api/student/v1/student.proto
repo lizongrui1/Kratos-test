@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/api/annotations.proto";
+import "validate/validate.proto";
 
 package api.student.v1;
 
@@ -11,7 +12,6 @@ option java_package = "api.student.v1";
  */
 
 service Student {
-	rpc CreateStudent (CreateStudentRequest) returns (CreateStudentReply);
 	rpc UpdateStudent (UpdateStudentRequest) returns (UpdateStudentReply);
 	rpc DeleteStudent (DeleteStudentRequest) returns (DeleteStudentReply);
 	rpc ListStudent (ListStudentRequest) returns (ListStudentReply);
@@ -20,10 +20,26 @@ service Student {
 			get: "/student/{id}",
 		};
 	}
+	rpc CreateStudent (CreateStudentRequest) returns (CreateStudentReply) {
+		option (google.api.http) = {
+			post: "/student/user"
+			body: "*"
+		};
+	}
 }
 
-message CreateStudentRequest {}
-message CreateStudentReply {}
+message StudentInfo {
+	string name   = 1;
+	int32  status = 2;
+	int32  id     = 3;
+}
+
+message CreateStudentRequest {
+	string name = 1 [(validate.rules).string = {min_len : 5, max_len: 50}];
+}
+message CreateStudentReply {
+	StudentInfo Student = 1;
+}
 
 message UpdateStudentRequest {}
 message UpdateStudentReply {}

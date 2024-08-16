@@ -21,15 +21,19 @@ import (
 
 // wireApp init kratos application.
 func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
-	dataData, cleanup, err := data.NewData(confData, logger)
+	db, err := data.NewGormDB(confData)
 	if err != nil {
 		return nil, nil, err
 	}
-	greeterRepo := data.NewGreeterRepo(dataData, logger)
-	greeterUsecase := biz.NewGreeterUsecase(greeterRepo, logger)
-	greeterService := service.NewGreeterService(greeterUsecase)
-	grpcServer := server.NewGRPCServer(confServer, greeterService, logger)
-	httpServer := server.NewHTTPServer(confServer, greeterService, logger)
+	dataData, cleanup, err := data.NewData(logger, db)
+	if err != nil {
+		return nil, nil, err
+	}
+	studentRepo := data.NewStudentRepo(dataData, logger)
+	studentUsecase := biz.NewStudentUsecase(studentRepo, logger)
+	studentService := service.NewStudentService(studentUsecase, logger)
+	grpcServer := server.NewGRPCServer(confServer, studentService, logger)
+	httpServer := server.NewHTTPServer(confServer, studentService, logger)
 	app := newApp(logger, grpcServer, httpServer)
 	return app, func() {
 		cleanup()

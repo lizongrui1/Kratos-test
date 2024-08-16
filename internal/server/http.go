@@ -1,6 +1,10 @@
 package server
 
 import (
+	"github.com/go-kratos/kratos/v2/middleware/logging"
+	"github.com/go-kratos/kratos/v2/middleware/metrics"
+	"github.com/go-kratos/kratos/v2/middleware/tracing"
+	"github.com/go-kratos/kratos/v2/middleware/validate"
 	v1 "student/api/student/v1"
 	"student/internal/conf"
 	"student/internal/service"
@@ -15,6 +19,10 @@ func NewHTTPServer(c *conf.Server, student *service.StudentService, logger log.L
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
+			tracing.Server(),
+			logging.Server(logger),
+			metrics.Server(),
+			validate.Validator(),
 		),
 	}
 	if c.Http.Network != "" {
