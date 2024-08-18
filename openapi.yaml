@@ -1,0 +1,81 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: Student API
+    version: 0.0.1
+paths:
+    /student/user:
+        post:
+            tags:
+                - Student
+            operationId: Student_CreateStudent
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.student.v1.CreateStudentRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.student.v1.CreateStudentReply'
+    /student/{id}:
+        get:
+            tags:
+                - Student
+            operationId: Student_GetStudent
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.student.v1.GetStudentReply'
+components:
+    schemas:
+        api.student.v1.CreateStudentReply:
+            type: object
+            properties:
+                Student:
+                    $ref: '#/components/schemas/api.student.v1.StudentInfo'
+        api.student.v1.CreateStudentRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+        api.student.v1.GetStudentReply:
+            type: object
+            properties:
+                name:
+                    type: string
+                status:
+                    type: integer
+                    format: int32
+                id:
+                    type: integer
+                    format: int32
+        api.student.v1.StudentInfo:
+            type: object
+            properties:
+                name:
+                    type: string
+                status:
+                    type: integer
+                    format: int32
+                id:
+                    type: integer
+                    format: int32
+tags:
+    - name: Student
