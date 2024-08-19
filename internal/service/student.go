@@ -21,33 +21,18 @@ func NewStudentService(stu *biz.StudentUsecase, logger log.Logger) *StudentServi
 	}
 }
 
-//func (s *StudentService) CreateStudent(ctx context.Context, req *pb.CreateStudentRequest) (*pb.CreateStudentReply, error) {
-//	return &pb.CreateStudentReply{}, nil
-//}
-//func (s *StudentService) UpdateStudent(ctx context.Context, req *pb.UpdateStudentRequest) (*pb.UpdateStudentReply, error) {
-//	return &pb.UpdateStudentReply{}, nil
-//}
-//func (s *StudentService) DeleteStudent(ctx context.Context, req *pb.DeleteStudentRequest) (*pb.DeleteStudentReply, error) {
-//	return &pb.DeleteStudentReply{}, nil
-//}
-//func (s *StudentService) ListStudent(ctx context.Context, req *pb.ListStudentRequest) (*pb.ListStudentReply, error) {
-//	return &pb.ListStudentReply{}, nil
-//}
-//func (s *StudentService) GetStudent(ctx context.Context, req *pb.GetStudentRequest) (*pb.GetStudentReply, error) {
-//	return &pb.GetStudentReply{}, nil
-//}
-
-// 获取学生信息
 func (s *StudentService) GetStudent(ctx context.Context, req *pb.GetStudentRequest) (*pb.GetStudentReply, error) {
 	stu, err := s.stu.Get(ctx, req.Id)
-
 	if err != nil {
 		return nil, err
 	}
-	return &pb.GetStudentReply{
-		Id:     stu.ID,
-		Status: stu.Status,
+	studentInfo := &pb.StudentInfo{
 		Name:   stu.Name,
+		Status: stu.Status,
+		Id:     stu.ID,
+	}
+	return &pb.GetStudentReply{
+		Student: studentInfo,
 	}, nil
 }
 
@@ -58,4 +43,23 @@ func (s *StudentService) CreateStudent(ctx context.Context, req *pb.CreateStuden
 		Name: req.Name,
 	}
 	return &pb.CreateStudentReply{}, s.stu.Create(ctx, &user)
+}
+
+func (s *StudentService) UpdateStudent(ctx context.Context, req *pb.UpdateStudentRequest) (*pb.UpdateStudentReply, error) {
+	err := s.stu.Update(ctx, req.Id, &biz.Student{})
+
+	if err != nil {
+		return nil, err
+	}
+	return &pb.UpdateStudentReply{}, nil
+}
+
+func (s *StudentService) DeleteStudent(ctx context.Context, req *pb.DeleteStudentRequest) (*pb.DeleteStudentReply, error) {
+	err := s.stu.Delete(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.DeleteStudentReply{
+		Message: "删除成功",
+	}, nil
 }

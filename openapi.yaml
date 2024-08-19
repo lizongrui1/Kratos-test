@@ -43,6 +43,48 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/api.student.v1.GetStudentReply'
+        put:
+            tags:
+                - Student
+            operationId: Student_UpdateStudent
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.student.v1.UpdateStudentRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.student.v1.UpdateStudentReply'
+        delete:
+            tags:
+                - Student
+            operationId: Student_DeleteStudent
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.student.v1.DeleteStudentReply'
 components:
     schemas:
         api.student.v1.CreateStudentReply:
@@ -55,17 +97,16 @@ components:
             properties:
                 name:
                     type: string
+        api.student.v1.DeleteStudentReply:
+            type: object
+            properties:
+                message:
+                    type: string
         api.student.v1.GetStudentReply:
             type: object
             properties:
-                name:
-                    type: string
-                status:
-                    type: integer
-                    format: int32
-                id:
-                    type: integer
-                    format: int32
+                Student:
+                    $ref: '#/components/schemas/api.student.v1.StudentInfo'
         api.student.v1.StudentInfo:
             type: object
             properties:
@@ -77,5 +118,18 @@ components:
                 id:
                     type: integer
                     format: int32
+        api.student.v1.UpdateStudentReply:
+            type: object
+            properties:
+                Student:
+                    $ref: '#/components/schemas/api.student.v1.StudentInfo'
+        api.student.v1.UpdateStudentRequest:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: int32
+                name:
+                    type: string
 tags:
     - name: Student

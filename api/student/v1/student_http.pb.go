@@ -20,17 +20,23 @@ var _ = binding.EncodeURL
 const _ = http.SupportPackageIsVersion1
 
 const OperationStudentCreateStudent = "/api.student.v1.Student/CreateStudent"
+const OperationStudentDeleteStudent = "/api.student.v1.Student/DeleteStudent"
 const OperationStudentGetStudent = "/api.student.v1.Student/GetStudent"
+const OperationStudentUpdateStudent = "/api.student.v1.Student/UpdateStudent"
 
 type StudentHTTPServer interface {
 	CreateStudent(context.Context, *CreateStudentRequest) (*CreateStudentReply, error)
+	DeleteStudent(context.Context, *DeleteStudentRequest) (*DeleteStudentReply, error)
 	GetStudent(context.Context, *GetStudentRequest) (*GetStudentReply, error)
+	UpdateStudent(context.Context, *UpdateStudentRequest) (*UpdateStudentReply, error)
 }
 
 func RegisterStudentHTTPServer(s *http.Server, srv StudentHTTPServer) {
 	r := s.Route("/")
 	r.GET("/student/{id}", _Student_GetStudent0_HTTP_Handler(srv))
 	r.POST("/student/user", _Student_CreateStudent0_HTTP_Handler(srv))
+	r.DELETE("/student/{id}", _Student_DeleteStudent0_HTTP_Handler(srv))
+	r.PUT("/student/{id}", _Student_UpdateStudent0_HTTP_Handler(srv))
 }
 
 func _Student_GetStudent0_HTTP_Handler(srv StudentHTTPServer) func(ctx http.Context) error {
@@ -77,9 +83,58 @@ func _Student_CreateStudent0_HTTP_Handler(srv StudentHTTPServer) func(ctx http.C
 	}
 }
 
+func _Student_DeleteStudent0_HTTP_Handler(srv StudentHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in DeleteStudentRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationStudentDeleteStudent)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.DeleteStudent(ctx, req.(*DeleteStudentRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*DeleteStudentReply)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _Student_UpdateStudent0_HTTP_Handler(srv StudentHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in UpdateStudentRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationStudentUpdateStudent)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.UpdateStudent(ctx, req.(*UpdateStudentRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*UpdateStudentReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type StudentHTTPClient interface {
 	CreateStudent(ctx context.Context, req *CreateStudentRequest, opts ...http.CallOption) (rsp *CreateStudentReply, err error)
+	DeleteStudent(ctx context.Context, req *DeleteStudentRequest, opts ...http.CallOption) (rsp *DeleteStudentReply, err error)
 	GetStudent(ctx context.Context, req *GetStudentRequest, opts ...http.CallOption) (rsp *GetStudentReply, err error)
+	UpdateStudent(ctx context.Context, req *UpdateStudentRequest, opts ...http.CallOption) (rsp *UpdateStudentReply, err error)
 }
 
 type StudentHTTPClientImpl struct {
@@ -103,6 +158,19 @@ func (c *StudentHTTPClientImpl) CreateStudent(ctx context.Context, in *CreateStu
 	return &out, nil
 }
 
+func (c *StudentHTTPClientImpl) DeleteStudent(ctx context.Context, in *DeleteStudentRequest, opts ...http.CallOption) (*DeleteStudentReply, error) {
+	var out DeleteStudentReply
+	pattern := "/student/{id}"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationStudentDeleteStudent))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "DELETE", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (c *StudentHTTPClientImpl) GetStudent(ctx context.Context, in *GetStudentRequest, opts ...http.CallOption) (*GetStudentReply, error) {
 	var out GetStudentReply
 	pattern := "/student/{id}"
@@ -110,6 +178,19 @@ func (c *StudentHTTPClientImpl) GetStudent(ctx context.Context, in *GetStudentRe
 	opts = append(opts, http.Operation(OperationStudentGetStudent))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *StudentHTTPClientImpl) UpdateStudent(ctx context.Context, in *UpdateStudentRequest, opts ...http.CallOption) (*UpdateStudentReply, error) {
+	var out UpdateStudentReply
+	pattern := "/student/{id}"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationStudentUpdateStudent))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "PUT", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

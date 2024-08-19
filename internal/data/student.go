@@ -3,7 +3,6 @@ package data
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/errors"
-
 	"student/internal/biz"
 	"student/internal/data/model"
 
@@ -24,7 +23,7 @@ func NewStudentRepo(data *Data, logger log.Logger) *StudentRepo {
 
 func (r *StudentRepo) GetStudent(ctx context.Context, id int32) (*biz.Student, error) {
 	var stu biz.Student
-	r.data.gormDB.Where("id = ?", id).First(&stu) // 这里使用了 gorm
+	r.data.gormDB.Where("id = ?", id).First(&stu)
 	r.log.WithContext(ctx).Info("gormDB: GetStudent, id: ", id)
 	return &biz.Student{
 		ID:        stu.ID,
@@ -36,11 +35,6 @@ func (r *StudentRepo) GetStudent(ctx context.Context, id int32) (*biz.Student, e
 	}, nil
 }
 
-//func (r *StudentRepo) SaveStudent(ctx context.Context, stu *biz.Student) (*biz.Student, error) {
-//	r.log.WithContext(ctx).Info("gormDB: SaveStudent")
-//	return stu, nil
-//}
-
 func (r *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error {
 	// 判断名称是否存在,存在则返回错误
 	_, err := r.GetStudent(ctx, stu.ID)
@@ -49,8 +43,20 @@ func (r *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error
 
 	}
 	return r.data.gormDB.Model(&model.Student{}).Create(&model.Student{
-		ID:   0,
-		Name: stu.Name,
+		Name:   stu.Name,
+		Info:   stu.Info,
+		Status: stu.Status,
 	}).Error
+}
 
+func (r *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Student) error {
+	return r.data.gormDB.WithContext(ctx).Model(&model.Student{}).Where("id = ?", id).Updates(&model.Student{
+		Name:   stu.Name,
+		Info:   stu.Info,
+		Status: stu.Status,
+	}).Error
+}
+
+func (r *StudentRepo) DeleteStudent(ctx context.Context, id int32) error {
+	return r.data.gormDB.WithContext(ctx).Where("id = ?", id).Delete(&model.Student{}).Error
 }
