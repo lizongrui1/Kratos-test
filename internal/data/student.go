@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/errors"
+	"gorm.io/gorm"
 	"student/internal/biz"
 	"student/internal/data/model"
 
@@ -23,7 +24,10 @@ func NewStudentRepo(data *Data, logger log.Logger) *StudentRepo {
 
 func (r *StudentRepo) GetStudent(ctx context.Context, id int32) (*biz.Student, error) {
 	var stu biz.Student
-	r.data.gormDB.Where("id = ?", id).First(&stu)
+	err := r.data.gormDB.Where("id = ?", id).First(&stu).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, errors.New(404, "用户不存在", "用户不存在")
+	}
 	r.log.WithContext(ctx).Info("gormDB: GetStudent, id: ", id)
 	return &biz.Student{
 		ID:        stu.ID,
@@ -36,12 +40,11 @@ func (r *StudentRepo) GetStudent(ctx context.Context, id int32) (*biz.Student, e
 }
 
 func (r *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error {
-	// 判断名称是否存在,存在则返回错误
-	_, err := r.GetStudent(ctx, stu.ID)
-	if err != nil {
-		return errors.New(400, "用户名已存在", "用户注册失败")
-
-	}
+	//_, err := r.GetStudent(ctx, stu.ID)
+	//if err != nil {
+	//	return errors.New(404, "用户名已存在", "用户注册失败")
+	//
+	//}
 	return r.data.gormDB.Model(&model.Student{}).Create(&model.Student{
 		Name:   stu.Name,
 		Info:   stu.Info,

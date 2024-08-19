@@ -53,20 +53,22 @@ message CreateStudentRequest {
 	string name = 1 [(validate.rules).string = {min_len : 5, max_len: 50}];
 }
 message CreateStudentReply {
-	StudentInfo Student = 1;
+	string Message = 1;
 }
 
 message UpdateStudentRequest {
 	int32 id = 1;
 	string name = 2 [(validate.rules).string = {min_len : 5, max_len: 50}];
+	string info = 3 [(validate.rules).string = {max_len: 255}];
+	int32 status = 4;
 }
 message UpdateStudentReply {
-	StudentInfo Student = 1;
+	string Message = 1;
 }
 
 message DeleteStudentRequest {
 	int32 id = 1;
 }
 message DeleteStudentReply {
-	string message = 1;
+	string Message = 1;
 }

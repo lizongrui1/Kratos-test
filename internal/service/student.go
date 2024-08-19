@@ -28,8 +28,8 @@ func (s *StudentService) GetStudent(ctx context.Context, req *pb.GetStudentReque
 	}
 	studentInfo := &pb.StudentInfo{
 		Name:   stu.Name,
-		Status: stu.Status,
 		Id:     stu.ID,
+		Status: stu.Status,
 	}
 	return &pb.GetStudentReply{
 		Student: studentInfo,
@@ -42,20 +42,31 @@ func (s *StudentService) CreateStudent(ctx context.Context, req *pb.CreateStuden
 		ID:   0,
 		Name: req.Name,
 	}
-	return &pb.CreateStudentReply{}, s.stu.Create(ctx, &user)
+	return &pb.CreateStudentReply{
+		Message: "创建成功",
+	}, s.stu.Create(ctx, &user)
 }
 
 func (s *StudentService) UpdateStudent(ctx context.Context, req *pb.UpdateStudentRequest) (*pb.UpdateStudentReply, error) {
-	err := s.stu.Update(ctx, req.Id, &biz.Student{})
-
+	err := s.stu.Update(ctx, req.Id, &biz.Student{
+		Name:   req.Name,
+		Info:   req.Info,
+		Status: req.Status,
+	})
 	if err != nil {
 		return nil, err
 	}
-	return &pb.UpdateStudentReply{}, nil
+	return &pb.UpdateStudentReply{
+		Message: "更新成功",
+	}, nil
 }
 
 func (s *StudentService) DeleteStudent(ctx context.Context, req *pb.DeleteStudentRequest) (*pb.DeleteStudentReply, error) {
-	err := s.stu.Delete(ctx, req.Id)
+	stu, err := s.stu.Get(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	err = s.stu.Delete(ctx, stu.ID)
 	if err != nil {
 		return nil, err
 	}

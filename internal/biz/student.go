@@ -23,7 +23,7 @@ type Student struct {
 }
 
 type StudentRepo interface {
-	GetStudent(ctx context.Context, id int32) (*Student, error) // 根据 id 获取学生信息
+	GetStudent(ctx context.Context, id int32) (*Student, error)
 	CreateStudent(ctx context.Context, stu *Student) error
 	UpdateStudent(ctx context.Context, id int32, stu *Student) error
 	DeleteStudent(ctx context.Context, id int32) error

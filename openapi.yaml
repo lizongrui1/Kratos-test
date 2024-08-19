@@ -90,8 +90,8 @@ components:
         api.student.v1.CreateStudentReply:
             type: object
             properties:
-                Student:
-                    $ref: '#/components/schemas/api.student.v1.StudentInfo'
+                Message:
+                    type: string
         api.student.v1.CreateStudentRequest:
             type: object
             properties:
@@ -100,7 +100,7 @@ components:
         api.student.v1.DeleteStudentReply:
             type: object
             properties:
-                message:
+                Message:
                     type: string
         api.student.v1.GetStudentReply:
             type: object
@@ -121,8 +121,8 @@ components:
         api.student.v1.UpdateStudentReply:
             type: object
             properties:
-                Student:
-                    $ref: '#/components/schemas/api.student.v1.StudentInfo'
+                Message:
+                    type: string
         api.student.v1.UpdateStudentRequest:
             type: object
             properties:
@@ -131,5 +131,10 @@ components:
                     format: int32
                 name:
                     type: string
+                info:
+                    type: string
+                status:
+                    type: integer
+                    format: int32
 tags:
     - name: Student
