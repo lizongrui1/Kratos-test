@@ -1,0 +1,8 @@
+services:
+  redis:
+    container_name: kratos-test
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
