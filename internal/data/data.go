@@ -43,19 +43,3 @@ func NewData(logger log.Logger, db *gorm.DB) (*Data, func(), error) {
 	}
 	return &Data{gormDB: db}, cleanup, nil
 }
-
-//func NewData(conf *conf.Data, logger log.Logger) (*Data, func(), error) {
-//	log := log.NewHelper(logger)
-//	db, err := gorm.Open(mysql.Open(conf.Database.Source), &gorm.Config{})
-//	if err != nil {
-//		return nil, nil, err
-//	}
-//
-//	d := &Data{
-//		gormDB: db,
-//	}
-//
-//	return d, func() {
-//		log.Info("message", "closing the data resources")
-//	}, nil
-//}
