@@ -17,6 +17,7 @@ var _ biz.RedisClient = (*RedisClient)(nil)
 type StudentRepo struct {
 	data *Data
 	log  *log.Helper
+	rdb  RedisClient
 }
 
 func NewStudentRepo(data *Data, logger log.Logger) *StudentRepo {
