@@ -22,15 +22,17 @@ import (
 // wireApp init kratos application.
 func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
 	db, err := data.NewGormDB(confData)
+	rdb := data.NewRdb(confData, logger)
+	redisClient := data.NewRedisClient(rdb, logger)
 	if err != nil {
 		return nil, nil, err
 	}
-	dataData, cleanup, err := data.NewData(logger, db)
+	dataData, cleanup, err := data.NewData(logger, db, rdb)
 	if err != nil {
 		return nil, nil, err
 	}
 	studentRepo := data.NewStudentRepo(dataData, logger)
-	studentUsecase := biz.NewStudentUsecase(studentRepo, logger)
+	studentUsecase := biz.NewStudentUsecase(studentRepo, redisClient, logger)
 	studentService := service.NewStudentService(studentUsecase, logger)
 	grpcServer := server.NewGRPCServer(confServer, studentService, logger)
 	httpServer := server.NewHTTPServer(confServer, studentService, logger)

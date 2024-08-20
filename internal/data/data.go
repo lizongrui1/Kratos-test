@@ -14,7 +14,7 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewGormDB, NewStudentRepo, NewRdb)
+var ProviderSet = wire.NewSet(NewData, NewGormDB, NewStudentRepo, NewRdb, NewRedisClient)
 
 // Data .
 type Data struct {
@@ -40,16 +40,9 @@ func NewGormDB(c *conf.Data) (*gorm.DB, error) {
 	return db, nil
 }
 
-// NewData .
-func NewData(logger log.Logger, db *gorm.DB) (*Data, func(), error) {
-	cleanup := func() {
-		log.NewHelper(logger).Info("closing the data resources")
-	}
-	return &Data{gormDB: db}, cleanup, nil
-}
-
+// NewRdb 初始化 redis
 func NewRdb(c *conf.Data, logger log.Logger) *redis.Client {
-	l := log.NewHelper(log.With(logger, "module", "layout-service/data/NewRdb"))
+	l := log.NewHelper(log.With(logger, "module", "data/NewRdb"))
 
 	opts := &redis.Options{
 		Addr:         c.Redis.Addr,
@@ -66,7 +59,6 @@ func NewRdb(c *conf.Data, logger log.Logger) *redis.Client {
 	if err := redisotel.InstrumentTracing(rdb); err != nil {
 		panic(err)
 	}
-
 	// Enable metrics instrumentation.
 	if err := redisotel.InstrumentMetrics(rdb); err != nil {
 		panic(err)
@@ -81,4 +73,19 @@ func NewRdb(c *conf.Data, logger log.Logger) *redis.Client {
 	//}
 
 	return rdb
+}
+
+// NewData 初始化 Data
+func NewData(logger log.Logger, db *gorm.DB, rdb *redis.Client) (*Data, func(), error) {
+	cleanup := func() {
+		log.NewHelper(logger).Info("closing the data resources")
+		sqlDB, _ := db.DB()
+		if err := sqlDB.Close(); err != nil {
+			log.NewHelper(logger).Errorf("failed to close gormDB: %v", err)
+		}
+		if err := rdb.Close(); err != nil {
+			log.NewHelper(logger).Errorf("failed to close redis: %v", err)
+		}
+	}
+	return &Data{gormDB: db, rdb: rdb}, cleanup, nil
 }

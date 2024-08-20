@@ -3,12 +3,16 @@ package data
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/errors"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"student/internal/biz"
 	"student/internal/data/model"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 )
+
+var _ biz.RedisClient = (*RedisClient)(nil)
 
 type StudentRepo struct {
 	data *Data
@@ -20,6 +24,30 @@ func NewStudentRepo(data *Data, logger log.Logger) *StudentRepo {
 		data: data,
 		log:  log.NewHelper(logger),
 	}
+}
+
+type RedisClient struct {
+	rdb *redis.Client
+	log *log.Helper
+}
+
+func NewRedisClient(rdb *redis.Client, logger log.Logger) *RedisClient {
+	return &RedisClient{
+		rdb: rdb,
+		log: log.NewHelper(logger),
+	}
+}
+
+func (c *RedisClient) Get(ctx context.Context, key string) (string, error) {
+	val, err := c.rdb.Get(ctx, key).Result()
+	if errors.Is(err, redis.Nil) {
+		return "", nil
+	}
+	return val, err
+}
+
+func (c *RedisClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+	return c.rdb.Set(ctx, key, value, expiration).Err()
 }
 
 func (r *StudentRepo) GetStudent(ctx context.Context, id int32) (*biz.Student, error) {

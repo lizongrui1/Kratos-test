@@ -5,7 +5,7 @@ import (
 )
 
 type Student struct {
-	ID        int64     `json:"id" gorm:"column:id;primaryKey"`
+	ID        int32     `json:"id" gorm:"column:id;primaryKey"`
 	Name      string    `json:"name" gorm:"column:name"`
 	Info      string    `json:"info" gorm:"column:info"`
 	Status    int32     `json:"status" gorm:"column:status"`
