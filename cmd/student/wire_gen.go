@@ -31,7 +31,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*
 	if err != nil {
 		return nil, nil, err
 	}
-	studentRepo := data.NewStudentRepo(dataData, logger)
+	studentRepo := data.NewStudentRepo(dataData, logger, redisClient)
 	studentUsecase := biz.NewStudentUsecase(studentRepo, redisClient, logger)
 	studentService := service.NewStudentService(studentUsecase, logger)
 	grpcServer := server.NewGRPCServer(confServer, studentService, logger)
