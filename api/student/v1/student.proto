@@ -34,6 +34,11 @@ service Student {
 			body: "*"
 		};
 	};
+	rpc ListStudent (ListStudentRequest) returns (ListStudentReply){
+		option (google.api.http) = {
+			get: "/student"
+		};
+	};
 }
 
 message StudentInfo {
@@ -71,4 +76,13 @@ message DeleteStudentRequest {
 }
 message DeleteStudentReply {
 	string Message = 1;
+}
+
+message ListStudentRequest {
+//	int32 page = 1;
+//	int32 size = 2;
+}
+
+message ListStudentReply {
+	repeated StudentInfo Student = 1;
 }

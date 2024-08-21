@@ -24,13 +24,14 @@ type Student struct {
 
 type StudentRepo interface {
 	// mysql
-	GetStudent(ctx context.Context, id int32) (*Student, error)
+	ListStudent(ctx context.Context) ([]*Student, error)
+	GetStudentById(ctx context.Context, id int32) (*Student, error)
 	CreateStudent(ctx context.Context, stu *Student) error
 	UpdateStudent(ctx context.Context, id int32, stu *Student) error
 	DeleteStudent(ctx context.Context, id int32) error
 
 	//redis
-	GetStuById(ctx context.Context, id int32) (*Student, error)
+	GetStuByRdb(ctx context.Context, id int32) (*Student, error)
 }
 
 type StudentUsecase struct {
@@ -47,8 +48,12 @@ func NewStudentUsecase(repo StudentRepo, rdb RedisClient, logger log.Logger) *St
 	return &StudentUsecase{repo: repo, rdb: rdb, log: log.NewHelper(logger)}
 }
 
+func (s *StudentUsecase) List(ctx context.Context, id int32) ([]*Student, error) {
+	return s.repo.ListStudent(ctx)
+}
+
 func (s *StudentUsecase) Get(ctx context.Context, id int32) (*Student, error) {
-	return s.repo.GetStuById(ctx, id)
+	return s.repo.GetStuByRdb(ctx, id)
 }
 
 func (s *StudentUsecase) Create(ctx context.Context, stu *Student) error {

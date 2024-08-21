@@ -6,6 +6,18 @@ info:
     title: Student API
     version: 0.0.1
 paths:
+    /student:
+        get:
+            tags:
+                - Student
+            operationId: Student_ListStudent
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.student.v1.ListStudentReply'
     /student/user:
         post:
             tags:
@@ -107,6 +119,13 @@ components:
             properties:
                 Student:
                     $ref: '#/components/schemas/api.student.v1.StudentInfo'
+        api.student.v1.ListStudentReply:
+            type: object
+            properties:
+                Student:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.student.v1.StudentInfo'
         api.student.v1.StudentInfo:
             type: object
             properties:

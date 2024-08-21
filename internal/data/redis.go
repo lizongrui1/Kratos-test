@@ -31,3 +31,7 @@ func (r *RedisClient) Get(ctx context.Context, key string) (string, error) {
 func (r *RedisClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
 	return r.rdb.Set(ctx, key, value, expiration).Err()
 }
+
+func (r *RedisClient) Del(ctx context.Context, keys ...string) *redis.IntCmd {
+	return r.rdb.Del(ctx, keys...)
+}
