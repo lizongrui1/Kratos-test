@@ -10,8 +10,8 @@ import (
 
 type StudentService struct {
 	pb.UnimplementedStudentServer
-	stu *biz.StudentUsecase
 	log *log.Helper
+	stu *biz.StudentUsecase
 }
 
 func NewStudentService(stu *biz.StudentUsecase, logger log.Logger) *StudentService {
@@ -22,7 +22,7 @@ func NewStudentService(stu *biz.StudentUsecase, logger log.Logger) *StudentServi
 }
 
 func (s *StudentService) GetStudent(ctx context.Context, req *pb.GetStudentRequest) (*pb.GetStudentReply, error) {
-	stu, err := s.stu.GetStuById(ctx, req.Id)
+	stu, err := s.stu.Get(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (s *StudentService) UpdateStudent(ctx context.Context, req *pb.UpdateStuden
 }
 
 func (s *StudentService) DeleteStudent(ctx context.Context, req *pb.DeleteStudentRequest) (*pb.DeleteStudentReply, error) {
-	stu, err := s.stu.GetStuById(ctx, req.Id)
+	stu, err := s.stu.Get(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}

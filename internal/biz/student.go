@@ -35,60 +35,60 @@ type StudentRepo interface {
 
 type StudentUsecase struct {
 	repo StudentRepo
-	rdb  RedisClient
 	log  *log.Helper
+	//rdb  RedisClient
 }
 type RedisClient interface {
 	Get(ctx context.Context, key string) (string, error)
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 }
 
-func NewStudentUsecase(repo StudentRepo, rdb RedisClient, logger log.Logger) *StudentUsecase {
-	return &StudentUsecase{repo: repo, rdb: rdb, log: log.NewHelper(logger)}
+func NewStudentUsecase(repo StudentRepo, logger log.Logger) *StudentUsecase {
+	return &StudentUsecase{repo: repo, log: log.NewHelper(logger)}
 }
 
-//func (su *StudentUsecase) Get(ctx context.Context, id int32) (*Student, error) {
-//	su.log.WithContext(ctx).Infof("biz.Get: %d", id)
-//	return su.repo.GetStudent(ctx, id)
-//}
-
-func (su *StudentUsecase) Create(ctx context.Context, stu *Student) error {
-	return su.repo.CreateStudent(ctx, stu)
+func (s *StudentUsecase) Get(ctx context.Context, id int32) (*Student, error) {
+	s.log.WithContext(ctx).Infof("biz.Get: %d", id)
+	return s.repo.GetStudent(ctx, id)
 }
 
-func (su *StudentUsecase) Update(ctx context.Context, id int32, stu *Student) error {
-	return su.repo.UpdateStudent(ctx, id, stu)
+func (s *StudentUsecase) Create(ctx context.Context, stu *Student) error {
+	return s.repo.CreateStudent(ctx, stu)
 }
 
-func (su *StudentUsecase) Delete(ctx context.Context, id int32) error {
-	return su.repo.DeleteStudent(ctx, id)
+func (s *StudentUsecase) Update(ctx context.Context, id int32, stu *Student) error {
+	return s.repo.UpdateStudent(ctx, id, stu)
 }
 
-//func (su *StudentUsecase) GetStuById(ctx context.Context, id int32) (*Student, error) {
+func (s *StudentUsecase) Delete(ctx context.Context, id int32) error {
+	return s.repo.DeleteStudent(ctx, id)
+}
+
+//func (s *StudentUsecase) GetStuById(ctx context.Context, id int32) (*Student, error) {
 //	var student *Student
-//	su.log.WithContext(ctx).Infof("biz.GetStuById: %d", id)
+//	s.log.WithContext(ctx).Infof("biz.GetStuById: %d", id)
 //	cacheKey := "student:" + fmt.Sprint(id)
-//	val, err := su.rdb.Get(ctx, cacheKey)
+//	val, err := s.rdb.Get(ctx, cacheKey)
 //	if err == nil && val != "" {
 //		if err := json.Unmarshal([]byte(val), &student); err == nil {
-//			su.log.WithContext(ctx).Infof("biz.GetStuById - Cache Hit: %v", student)
+//			s.log.WithContext(ctx).Infof("biz.GetStuById - Cache Hit: %v", student)
 //			return student, nil
 //		}
-//		su.log.WithContext(ctx).Errorf("failed to unmarshal student from redis: %v", err)
+//		s.log.WithContext(ctx).Errorf("failed to unmarshal student from redis: %v", err)
 //	}
 //	// 缓存未命中或解析失败，从数据库获取数据
-//	student, err = su.repo.GetStudent(ctx, id)
+//	student, err = s.repo.GetStudent(ctx, id)
 //	if err != nil {
 //		return nil, err
 //	}
 //	// 数据库查询成功，将结果缓存到 Redis
 //	data, err := json.Marshal(student)
 //	if err != nil {
-//		su.log.WithContext(ctx).Errorf("failed to marshal student to json: %v", err)
+//		s.log.WithContext(ctx).Errorf("failed to marshal student to json: %v", err)
 //	} else {
-//		err = su.rdb.Set(ctx, cacheKey, data, time.Minute*5)
+//		err = s.rdb.Set(ctx, cacheKey, data, time.Minute*5)
 //		if err != nil {
-//			su.log.WithContext(ctx).Errorf("failed to set student data to redis: %v", err)
+//			s.log.WithContext(ctx).Errorf("failed to set student data to redis: %v", err)
 //		}
 //	}
 //	return student, nil

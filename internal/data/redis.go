@@ -4,9 +4,36 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-kratos/kratos/v2/errors"
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/redis/go-redis/v9"
 	"student/internal/biz"
 	"time"
 )
+
+type RedisClient struct {
+	rdb *redis.Client
+	log *log.Helper
+}
+
+func NewRedisClient(rdb *redis.Client, logger log.Logger) *RedisClient {
+	return &RedisClient{
+		rdb: rdb,
+		log: log.NewHelper(logger),
+	}
+}
+
+func (c *RedisClient) Get(ctx context.Context, key string) (string, error) {
+	val, err := c.rdb.Get(ctx, key).Result()
+	if errors.Is(err, redis.Nil) {
+		return "", nil
+	}
+	return val, err
+}
+
+func (c *RedisClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+	return c.rdb.Set(ctx, key, value, expiration).Err()
+}
 
 func (r *StudentRepo) GetStuById(ctx context.Context, id int32) (*biz.Student, error) {
 	var student *biz.Student
@@ -21,7 +48,7 @@ func (r *StudentRepo) GetStuById(ctx context.Context, id int32) (*biz.Student, e
 		r.log.WithContext(ctx).Errorf("failed to unmarshal student from redis: %v", err)
 	}
 	// 缓存未命中或解析失败，从数据库获取数据
-	student, err = biz.StudentRepo.GetStudent(ctx, id)
+	student, err = biz.StudentRepo.Get(ctx, id)
 	if err != nil {
 		return nil, err
 	}
