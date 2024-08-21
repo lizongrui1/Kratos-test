@@ -29,6 +29,7 @@ func NewStudentRepo(data *Data, logger log.Logger, redisClient *RedisClient) *St
 	}
 }
 
+// ListStudent TODO
 func (s *StudentRepo) ListStudent(ctx context.Context) ([]*biz.Student, error) {
 	var students []*model.Student
 	err := s.data.gormDB.WithContext(ctx).Find(&students).Error
@@ -179,16 +180,13 @@ func (s *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Stud
 		tx.Rollback()
 		return err
 	}
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
 	redisKey := fmt.Sprintf("student:%d", id)
 	if err := s.rdb.Del(ctx, redisKey).Err(); err != nil {
 		tx.Rollback()
 		return err
-	}
-	if err := tx.Commit().Error; err != nil {
-		return err
-	}
-	if err := s.rdb.Del(ctx, redisKey).Err(); err != nil {
-		s.log.WithContext(ctx).Errorf("failed to delete cache after commit: %v", err)
 	}
 	return nil
 }
