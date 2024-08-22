@@ -11,6 +11,17 @@ paths:
             tags:
                 - Student
             operationId: Student_ListStudent
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: size
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
             responses:
                 "200":
                     description: OK

@@ -21,6 +21,26 @@ func NewStudentService(stu *biz.StudentUsecase, logger log.Logger) *StudentServi
 	}
 }
 
+func (s *StudentService) ListStudent(ctx context.Context, req *pb.ListStudentRequest) (*pb.ListStudentReply, error) {
+	students, err := s.stu.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var studentInfos []*pb.StudentInfo
+	for _, stu := range students {
+		studentInfo := &pb.StudentInfo{
+			Name:   stu.Name,
+			Id:     stu.ID,
+			Status: stu.Status,
+		}
+		studentInfos = append(studentInfos, studentInfo)
+	}
+
+	return &pb.ListStudentReply{
+		Student: studentInfos,
+	}, nil
+}
+
 func (s *StudentService) GetStudent(ctx context.Context, req *pb.GetStudentRequest) (*pb.GetStudentReply, error) {
 	stu, err := s.stu.Get(ctx, req.Id)
 	if err != nil {

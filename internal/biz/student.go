@@ -39,16 +39,17 @@ type StudentUsecase struct {
 	log  *log.Helper
 	rdb  RedisClient
 }
-type RedisClient interface {
-	Get(ctx context.Context, key string) (string, error)
-	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
-}
 
 func NewStudentUsecase(repo StudentRepo, rdb RedisClient, logger log.Logger) *StudentUsecase {
 	return &StudentUsecase{repo: repo, rdb: rdb, log: log.NewHelper(logger)}
 }
 
-func (s *StudentUsecase) List(ctx context.Context, id int32) ([]*Student, error) {
+type RedisClient interface {
+	Get(ctx context.Context, key string) (string, error)
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
+}
+
+func (s *StudentUsecase) List(ctx context.Context) ([]*Student, error) {
 	return s.repo.ListStudent(ctx)
 }
 

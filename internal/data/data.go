@@ -18,8 +18,8 @@ var ProviderSet = wire.NewSet(NewData, NewGormDB, NewStudentRepo, NewRdb, NewRed
 
 // Data .
 type Data struct {
-	gormDB *gorm.DB
-	rdb    *redis.Client
+	db  *gorm.DB
+	rdb *redis.Client
 }
 
 // NewGormDB 初始化 gorm
@@ -81,11 +81,11 @@ func NewData(logger log.Logger, db *gorm.DB, rdb *redis.Client) (*Data, func(), 
 		log.NewHelper(logger).Info("closing the data resources")
 		sqlDB, _ := db.DB()
 		if err := sqlDB.Close(); err != nil {
-			log.NewHelper(logger).Errorf("failed to close gormDB: %v", err)
+			log.NewHelper(logger).Errorf("failed to close db: %v", err)
 		}
 		if err := rdb.Close(); err != nil {
 			log.NewHelper(logger).Errorf("failed to close redis: %v", err)
 		}
 	}
-	return &Data{gormDB: db, rdb: rdb}, cleanup, nil
+	return &Data{db: db, rdb: rdb}, cleanup, nil
 }

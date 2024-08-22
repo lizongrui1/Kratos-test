@@ -21,18 +21,17 @@ type StudentRepo struct {
 	rdb  *RedisClient
 }
 
-func NewStudentRepo(data *Data, logger log.Logger, redisClient *RedisClient) *StudentRepo {
+func NewStudentRepo(data *Data, logger log.Logger, redisClient *RedisClient) biz.StudentRepo {
 	return &StudentRepo{
-		data,
-		log.NewHelper(logger),
-		redisClient,
+		data: data,
+		log:  log.NewHelper(logger),
+		rdb:  redisClient,
 	}
 }
 
-// ListStudent TODO
 func (s *StudentRepo) ListStudent(ctx context.Context) ([]*biz.Student, error) {
 	var students []*model.Student
-	err := s.data.gormDB.WithContext(ctx).Find(&students).Error
+	err := s.data.db.WithContext(ctx).Find(&students).Error
 	if err != nil {
 		return nil, err
 	}
@@ -47,16 +46,26 @@ func (s *StudentRepo) ListStudent(ctx context.Context) ([]*biz.Student, error) {
 			CreatedAt: stu.CreatedAt,
 		})
 	}
+	for _, stu := range stus {
+		stuJSON, err := json.Marshal(stu)
+		if err != nil {
+			return nil, err
+		}
+		err = s.rdb.RPush(ctx, "students:list", stuJSON).Err()
+		if err != nil {
+			return nil, err
+		}
+	}
 	return stus, nil
 }
 
 func (s *StudentRepo) GetStudentById(ctx context.Context, id int32) (*biz.Student, error) {
 	var stu biz.Student
-	err := s.data.gormDB.Where("id = ?", id).First(&stu).Error
+	err := s.data.db.Where("id = ?", id).First(&stu).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New(404, "USER_IS_NOT_EXIST", "用户不存在")
 	}
-	s.log.WithContext(ctx).Info("gormDB: GetStudentById, id: ", id)
+	s.log.WithContext(ctx).Info("db: GetStudentById, id: ", id)
 	return &biz.Student{
 		ID:        stu.ID,
 		Name:      stu.Name,
@@ -69,11 +78,11 @@ func (s *StudentRepo) GetStudentById(ctx context.Context, id int32) (*biz.Studen
 
 func (s *StudentRepo) GetStudentByName(ctx context.Context, name string) (*biz.Student, error) {
 	var stu model.Student
-	err := s.data.gormDB.Where("name = ?", name).First(&stu).Error
+	err := s.data.db.Where("name = ?", name).First(&stu).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New(404, "USER_IS_NOT_EXIST", "用户不存在")
 	}
-	s.log.WithContext(ctx).Info("gormDB: GetStudentById, Name: ", name)
+	s.log.WithContext(ctx).Info("db: GetStudentById, Name: ", name)
 	return &biz.Student{
 		ID:        stu.ID,
 		Name:      stu.Name,
@@ -156,7 +165,7 @@ func (s *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error
 	if err == nil {
 		return errors.New(409, "USER_IS_EXIST", "用户已存在，无法创建")
 	} else {
-		return s.data.gormDB.Model(&model.Student{}).Create(&model.Student{
+		return s.data.db.Model(&model.Student{}).Create(&model.Student{
 			Name:   stu.Name,
 			Info:   stu.Info,
 			Status: stu.Status,
@@ -165,12 +174,12 @@ func (s *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error
 }
 
 func (s *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Student) error {
-	//return s.data.gormDB.WithContext(ctx).Model(&model.Student{}).Where("id = ?", id).Updates(&model.Student{
+	//return s.data.db.WithContext(ctx).Model(&model.Student{}).Where("id = ?", id).Updates(&model.Student{
 	//	Name:   stu.Name,
 	//	Info:   stu.Info,
 	//	Status: stu.Status,
 	//}).Error
-	tx := s.data.gormDB.WithContext(ctx).Begin()
+	tx := s.data.db.WithContext(ctx).Begin()
 	err := tx.Model(&model.Student{}).Where("id = ?", id).Updates(&model.Student{
 		Name:   stu.Name,
 		Info:   stu.Info,
@@ -192,8 +201,8 @@ func (s *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Stud
 }
 
 func (s *StudentRepo) DeleteStudent(ctx context.Context, id int32) error {
-	//return s.data.gormDB.WithContext(ctx).Where("id = ?", id).Delete(&model.Student{}).Error
-	tx := s.data.gormDB.WithContext(ctx).Begin()
+	//return s.data.db.WithContext(ctx).Where("id = ?", id).Delete(&model.Student{}).Error
+	tx := s.data.db.WithContext(ctx).Begin()
 	if err := tx.Delete(&model.Student{}, id).Error; err != nil {
 		tx.Rollback()
 		return err
