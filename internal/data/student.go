@@ -165,6 +165,10 @@ func (s *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error
 	if err == nil {
 		return errors.New(409, "USER_IS_EXIST", "用户已存在，无法创建")
 	} else {
+		listKey := "students:list"
+		if err := s.rdb.Del(ctx, listKey).Err(); err != nil {
+			return err
+		}
 		return s.data.db.Model(&model.Student{}).Create(&model.Student{
 			Name:   stu.Name,
 			Info:   stu.Info,
@@ -174,11 +178,6 @@ func (s *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error
 }
 
 func (s *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Student) error {
-	//return s.data.db.WithContext(ctx).Model(&model.Student{}).Where("id = ?", id).Updates(&model.Student{
-	//	Name:   stu.Name,
-	//	Info:   stu.Info,
-	//	Status: stu.Status,
-	//}).Error
 	tx := s.data.db.WithContext(ctx).Begin()
 	err := tx.Model(&model.Student{}).Where("id = ?", id).Updates(&model.Student{
 		Name:   stu.Name,
@@ -194,21 +193,25 @@ func (s *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Stud
 	}
 	redisKey := fmt.Sprintf("student:%d", id)
 	if err := s.rdb.Del(ctx, redisKey).Err(); err != nil {
-		tx.Rollback()
+		return err
+	}
+	listKey := "students:list"
+	if err := s.rdb.Del(ctx, listKey).Err(); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *StudentRepo) DeleteStudent(ctx context.Context, id int32) error {
-	//return s.data.db.WithContext(ctx).Where("id = ?", id).Delete(&model.Student{}).Error
 	tx := s.data.db.WithContext(ctx).Begin()
 	if err := tx.Delete(&model.Student{}, id).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
 	redisKey := fmt.Sprintf("student:%d", id)
-	if err := s.rdb.Del(ctx, redisKey).Err(); err != nil {
+	listKey := "students:list"
+	if err := s.rdb.Del(ctx, redisKey, listKey).Err(); err != nil {
+		s.log.WithContext(ctx).Errorf("failed to delete Redis keys: %v", err)
 		tx.Rollback()
 		return err
 	}
