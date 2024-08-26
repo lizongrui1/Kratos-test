@@ -16,8 +16,6 @@ import (
 
 var _ biz.RedisClient = (*RedisClient)(nil)
 
-var _ biz.StudentRepo = (*StudentRepo)(nil)
-
 type StudentRepo struct {
 	data *Data
 	log  *log.Helper
@@ -116,20 +114,20 @@ func (s *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Stud
 	}).Error
 	if err != nil {
 		tx.Rollback()
+		s.log.WithContext(ctx).Errorf("Failed to update student in database: %v", err)
 		return err
 	}
 	if err := tx.Commit().Error; err != nil {
+		s.log.WithContext(ctx).Errorf("Failed to commit transaction: %v", err)
 		return err
 	}
 	redisKey := fmt.Sprintf("student:%d", id)
-	if err := s.rdb.Del(ctx, redisKey).Err(); err != nil {
-		return err
-	}
 	listKey := "students:list"
-	if err := s.rdb.Del(ctx, listKey).Err(); err != nil {
+	if err := s.rdb.Del(ctx, redisKey, listKey).Err(); err != nil {
+		s.log.WithContext(ctx).Errorf("Failed to delete Redis keys [%s, %s]: %v", redisKey, listKey, err)
 		return err
 	}
-	if err := s.SendCreateStudentMsg(ctx, stu); err != nil {
+	if err := s.SendUpdateStudentMsg(ctx, stu); err != nil {
 		s.log.WithContext(ctx).Errorf("发送创建学生消息失败: %v", err)
 		return err
 	}
@@ -229,9 +227,10 @@ func (s *StudentRepo) SendDeleteStudentMsg(ctx context.Context, id int32) error 
 	return nil
 }
 
-func (s *StudentRepo) SendUpdateStudentMsg(ctx context.Context, stu *model.Student) error {
+func (s *StudentRepo) SendUpdateStudentMsg(ctx context.Context, stu *biz.Student) error {
 	data, err := json.Marshal(stu)
 	if err != nil {
+		s.log.WithContext(ctx).Errorf("Failed to marshal student data: %v", err)
 		return err
 	}
 	msg := &Msg{
@@ -239,7 +238,8 @@ func (s *StudentRepo) SendUpdateStudentMsg(ctx context.Context, stu *model.Stude
 		Body:      data,
 		Partition: 0,
 	}
-	if err := s.rdb.PopMsg(ctx, 0, msg.Topic).Err(); err != nil {
+	if err := s.rdb.PushMsg(ctx, msg.Topic, msg.Body).Err(); err != nil {
+		s.log.WithContext(ctx).Errorf("Failed to push update student message: %v", err)
 		return err
 	}
 	return nil

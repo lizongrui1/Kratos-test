@@ -2,7 +2,6 @@ package biz
 
 import (
 	"context"
-	"student/internal/data/model"
 	"time"
 
 	"github.com/go-kratos/kratos/v2/errors"
@@ -41,7 +40,7 @@ type StudentRepo interface {
 	SendDeleteStudentMsg(ctx context.Context, id int32) error
 	ConsumeStudentDeleteMsg(ctx context.Context)
 	HandleDeleteStudentMsg(ctx context.Context, id int32)
-	SendUpdateStudentMsg(ctx context.Context, stu *model.Student) error
+	SendUpdateStudentMsg(ctx context.Context, stu *Student) error
 	ConsumeStudentUpdateMsg(ctx context.Context) error
 	HandleUpdateStudentMsg(ctx context.Context, message string)
 }
