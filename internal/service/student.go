@@ -3,15 +3,16 @@ package service
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
-	"student/internal/biz"
-
 	pb "student/api/student/v1"
+	"student/internal/biz"
+	"student/internal/data"
 )
 
 type StudentService struct {
 	pb.UnimplementedStudentServer
 	log *log.Helper
 	stu *biz.StudentUsecase
+	rdb data.RedisClientRepo
 }
 
 func NewStudentService(stu *biz.StudentUsecase, logger log.Logger) *StudentService {
@@ -62,9 +63,13 @@ func (s *StudentService) CreateStudent(ctx context.Context, req *pb.CreateStuden
 		ID:   0,
 		Name: req.Name,
 	}
+	err := s.stu.Create(ctx, &user)
+	if err != nil {
+		return nil, err
+	}
 	return &pb.CreateStudentReply{
 		Message: "创建成功",
-	}, s.stu.Create(ctx, &user)
+	}, nil
 }
 
 func (s *StudentService) UpdateStudent(ctx context.Context, req *pb.UpdateStudentRequest) (*pb.UpdateStudentReply, error) {

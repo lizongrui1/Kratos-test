@@ -2,9 +2,10 @@ package biz
 
 import (
 	"context"
+	"time"
+
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
-	"time"
 
 	v1 "student/api/student/v1"
 )
@@ -32,6 +33,9 @@ type StudentRepo interface {
 
 	//redis
 	GetStuByRdb(ctx context.Context, id int32) (*Student, error)
+	SendGetStudentMsg(ctx context.Context, id int32) error
+	ConsumeStudentCreateMsg(ctx context.Context)
+	HandleCreateStudentMsg(ctx context.Context, message string)
 }
 
 type StudentUsecase struct {

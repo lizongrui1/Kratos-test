@@ -15,19 +15,23 @@ import (
 
 var _ biz.RedisClient = (*RedisClient)(nil)
 
+var _ biz.StudentRepo = (*StudentRepo)(nil)
+
 type StudentRepo struct {
 	data *Data
 	log  *log.Helper
 	rdb  *RedisClient
 }
 
-func NewStudentRepo(data *Data, logger log.Logger, redisClient *RedisClient) biz.StudentRepo {
+func NewStudentRepo(data *Data, logger log.Logger, rdb *RedisClient) *StudentRepo {
 	return &StudentRepo{
 		data: data,
 		log:  log.NewHelper(logger),
-		rdb:  redisClient,
+		rdb:  rdb,
 	}
 }
+
+// MySQL
 
 func (s *StudentRepo) ListStudent(ctx context.Context) ([]*biz.Student, error) {
 	var students []*model.Student
@@ -93,88 +97,45 @@ func (s *StudentRepo) GetStudentByName(ctx context.Context, name string) (*biz.S
 	}, nil
 }
 
-//func (s *StudentRepo) GetStuByRdb(ctx context.Context, id int32) (*biz.Student, error) {
-//	var student biz.Student
-//	s.log.WithContext(ctx).Infof("GetStuByRdb: %d", id)
-//	cacheKey := "student:" + fmt.Sprint(id)
-//	val, err := s.rdb.Get(ctx, cacheKey)
-//	if errors.Is(err, redis.Nil) {
-//		go func() {
-//			fmt.Println("缓存未命中，异步加载数据并更新缓存")
-//			studentPtr, err := s.GetStudentById(ctx, id)
-//			if err != nil {
-//				l.Printf("从数据库加载数据失败: %v", err)
-//				return
-//			}
-//			data, err := json.Marshal(studentPtr)
-//			if err != nil {
-//				l.Printf("序列化 student 失败: %v", err)
-//				return
-//			}
-//			err = s.rdb.Set(ctx, cacheKey, data, 3*time.Minute)
-//			if err != nil {
-//				l.Printf("异步更新缓存失败: %v", err)
-//			} else {
-//				fmt.Printf("缓存更新成功: %s = %s\n", cacheKey, data)
-//			}
-//		}()
-//		return nil, fmt.Errorf("缓存未命中，数据正在异步加载")
+//func (s *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error {
+//	_, err := s.GetStudentByName(ctx, stu.Name)
+//	if err == nil {
+//		return errors.New(409, "USER_IS_EXIST", "用户已存在，无法创建")
+//	} else {
+//		listKey := "students:list"
+//		if err := s.rdb.Del(ctx, listKey).Err(); err != nil {
+//			return err
+//		}
+//		return s.data.db.Model(&model.Student{}).Create(&model.Student{
+//			Name:   stu.Name,
+//			Info:   stu.Info,
+//			Status: stu.Status,
+//		}).Error
 //	}
-//	if err := json.Unmarshal([]byte(val), &student); err != nil {
-//		s.log.WithContext(ctx).Infof("biz.GetStuByRdb - Cache Hit: %v", student)
-//		return nil, err
-//	}
-//	return &student, nil
 //}
-
-func (s *StudentRepo) GetStuByRdb(ctx context.Context, id int32) (*biz.Student, error) {
-	var student biz.Student
-	s.log.WithContext(ctx).Infof("biz.GetStuByRdb: %d", id)
-	cacheKey := "student:" + fmt.Sprint(id)
-	val, err := s.rdb.Get(ctx, cacheKey)
-	if err == nil {
-		if err := json.Unmarshal([]byte(val), &student); err == nil {
-			s.log.WithContext(ctx).Infof("Cache Hit: %v", student)
-			return &student, nil
-		}
-		s.log.WithContext(ctx).Errorf("failed to unmarshal student: %v", err)
-	} else if !errors.Is(err, redis.Nil) {
-		s.log.WithContext(ctx).Errorf("redis get error: %v", err)
-	}
-	// 缓存未命中或解析失败，从数据库获取数据
-	studentPtr, err := s.GetStudentById(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	student = *studentPtr
-	// 数据库查询成功，将结果缓存到 Redis
-	data, err := json.Marshal(student)
-	if err != nil {
-		s.log.WithContext(ctx).Errorf("failed to marshal student to json: %v", err)
-	} else {
-		err = s.rdb.Set(ctx, cacheKey, data, 5*time.Minute)
-		if err != nil {
-			s.log.WithContext(ctx).Errorf("failed to set student data to redis: %v", err)
-		}
-	}
-	return &student, nil
-}
 
 func (s *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error {
 	_, err := s.GetStudentByName(ctx, stu.Name)
 	if err == nil {
 		return errors.New(409, "USER_IS_EXIST", "用户已存在，无法创建")
 	} else {
-		listKey := "students:list"
-		if err := s.rdb.Del(ctx, listKey).Err(); err != nil {
-			return err
-		}
-		return s.data.db.Model(&model.Student{}).Create(&model.Student{
-			Name:   stu.Name,
-			Info:   stu.Info,
-			Status: stu.Status,
-		}).Error
+		return s.SendCreateStudentMsg(ctx, stu)
 	}
+}
+
+func (s *StudentRepo) SendCreateStudentMsg(ctx context.Context, stu *biz.Student) error {
+	data, err := json.Marshal(stu)
+	if err != nil {
+		s.log.WithContext(ctx).Errorf("failed to marshal student data: %v", err)
+		return err
+	}
+	msg := &Msg{
+		Topic:     "student_create",
+		Body:      data,
+		Partition: 0,
+	}
+	//topicPartition := fmt.Sprintf("%s:%d", msg.Topic, msg.Partition)
+	return s.rdb.PushMsg(ctx, msg.Topic, msg.Body).Err()
 }
 
 func (s *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Student) error {
@@ -216,4 +177,114 @@ func (s *StudentRepo) DeleteStudent(ctx context.Context, id int32) error {
 		return err
 	}
 	return tx.Commit().Error
+}
+
+// RedisClient
+
+func (s *StudentRepo) GetStuByRdb(ctx context.Context, id int32) (*biz.Student, error) {
+	var student biz.Student
+	s.log.WithContext(ctx).Infof("biz.GetStuByRdb: %d", id)
+	cacheKey := "student:" + fmt.Sprint(id)
+	val, err := s.rdb.Get(ctx, cacheKey)
+	if err == nil {
+		if err := json.Unmarshal([]byte(val), &student); err == nil {
+			s.log.WithContext(ctx).Infof("Cache Hit: %v", student)
+			return &student, nil
+		}
+		s.log.WithContext(ctx).Errorf("failed to unmarshal student: %v", err)
+	} else if !errors.Is(err, redis.Nil) {
+		s.log.WithContext(ctx).Errorf("redis get error: %v", err)
+	}
+	// 缓存未命中或解析失败，从数据库获取数据
+	studentPtr, err := s.GetStudentById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	student = *studentPtr
+	// 数据库查询成功，将结果缓存到 Redis
+	data, err := json.Marshal(student)
+	if err != nil {
+		s.log.WithContext(ctx).Errorf("failed to marshal student to json: %v", err)
+	} else {
+		err = s.rdb.Set(ctx, cacheKey, data, 5*time.Minute)
+		if err != nil {
+			s.log.WithContext(ctx).Errorf("failed to set student data to redis: %v", err)
+		}
+	}
+	return &student, nil
+}
+
+func (s *StudentRepo) SendGetStudentMsg(ctx context.Context, id int32) error {
+	msg := &Msg{
+		Topic:     "student_create",
+		Body:      []byte(fmt.Sprintf("%d", id)),
+		Partition: 0,
+	}
+	topicPartition := fmt.Sprintf("%s:%d", msg.Topic, msg.Partition)
+	return s.rdb.PushMsg(ctx, topicPartition, msg.Body).Err()
+}
+
+func (s *StudentRepo) ConsumeStudentCreateMsg(ctx context.Context) {
+	topic := "student_create"
+	for {
+		cmd := s.rdb.PopMsg(ctx, 0, topic)
+		messages, err := cmd.Result()
+		if err != nil {
+			if errors.Is(err, redis.Nil) {
+				s.log.WithContext(ctx).Info("No messages found")
+				time.Sleep(5 * time.Second)
+				continue
+			}
+			s.log.WithContext(ctx).Errorf("Error consuming messages: %v", err)
+			continue
+		}
+		for _, message := range messages[1:] {
+			s.HandleCreateStudentMsg(ctx, message)
+		}
+		time.Sleep(10 * time.Second)
+	}
+}
+
+func (s *StudentRepo) HandleCreateStudentMsg(ctx context.Context, message string) {
+	var stu biz.Student
+	if err := json.Unmarshal([]byte(message), &stu); err != nil {
+		s.log.WithContext(ctx).Errorf("Failed to unmarshal student data: %v", err)
+		return
+	}
+	modelStudent := &model.Student{
+		Name:   stu.Name,
+		Info:   stu.Info,
+		Status: stu.Status,
+	}
+	if err := s.data.db.Model(&model.Student{}).Create(modelStudent).Error; err != nil {
+		s.log.WithContext(ctx).Errorf("Failed to create student in database: %v", err)
+		return
+	}
+	s.log.WithContext(ctx).Info("Successfully created student.")
+}
+
+func (s *StudentRepo) Consume(ctx context.Context, topic string, partition int, h Handler) error {
+	for {
+		body, err := s.rdb.PopMsg(ctx, 2*time.Second, topic).Result()
+		if err != nil {
+			if errors.Is(err, redis.Nil) {
+				s.log.WithContext(ctx).Info("no message found")
+				time.Sleep(time.Second)
+				continue
+			}
+			s.log.WithContext(ctx).Info("consuming message error")
+			return err
+		}
+		for _, v := range body {
+			if err := h(&Msg{Topic: topic, Body: []byte(v), Partition: partition}); err != nil {
+				s.log.WithContext(ctx).Info("handle message error")
+				continue
+			}
+			if err := s.rdb.DeleteMessage(ctx, topic, v).Err(); err != nil {
+				s.log.WithContext(ctx).Info("delete message error")
+				continue
+			}
+			s.log.WithContext(ctx).Info("message processed and deleted")
+		}
+	}
 }

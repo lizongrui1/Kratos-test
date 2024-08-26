@@ -1,10 +1,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
-
-	"student/internal/conf"
+	"student/internal/data"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
@@ -13,8 +13,8 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
-
 	_ "go.uber.org/automaxprocs"
+	"student/internal/conf"
 )
 
 // go build -ldflags "-X main.Version=x.y.z"
@@ -33,8 +33,8 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
-func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
-	return kratos.New(
+func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, studentRepo *data.StudentRepo) *kratos.App {
+	app := kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
 		kratos.Version(Version),
@@ -45,6 +45,9 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
 			hs,
 		),
 	)
+	// 启动消费者来监听学生创建的消息
+	go studentRepo.ConsumeStudentCreateMsg(context.Background())
+	return app
 }
 
 func main() {
@@ -74,7 +77,7 @@ func main() {
 		panic(err)
 	}
 
-	app, cleanup, err := wireApp(bc.Server, bc.Data, logger)
+	app, cleanup, _, err := wireApp(bc.Server, bc.Data, logger)
 	if err != nil {
 		panic(err)
 	}
