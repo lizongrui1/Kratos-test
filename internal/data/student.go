@@ -8,6 +8,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
+	"strconv"
 	"student/internal/biz"
 	"student/internal/data/model"
 	"time"
@@ -64,7 +65,7 @@ func (s *StudentRepo) ListStudent(ctx context.Context) ([]*biz.Student, error) {
 }
 
 func (s *StudentRepo) GetStudentById(ctx context.Context, id int32) (*biz.Student, error) {
-	var stu biz.Student
+	var stu model.Student
 	err := s.data.db.Where("id = ?", id).First(&stu).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New(404, "USER_IS_NOT_EXIST", "用户不存在")
@@ -97,23 +98,6 @@ func (s *StudentRepo) GetStudentByName(ctx context.Context, name string) (*biz.S
 	}, nil
 }
 
-//func (s *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error {
-//	_, err := s.GetStudentByName(ctx, stu.Name)
-//	if err == nil {
-//		return errors.New(409, "USER_IS_EXIST", "用户已存在，无法创建")
-//	} else {
-//		listKey := "students:list"
-//		if err := s.rdb.Del(ctx, listKey).Err(); err != nil {
-//			return err
-//		}
-//		return s.data.db.Model(&model.Student{}).Create(&model.Student{
-//			Name:   stu.Name,
-//			Info:   stu.Info,
-//			Status: stu.Status,
-//		}).Error
-//	}
-//}
-
 func (s *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error {
 	_, err := s.GetStudentByName(ctx, stu.Name)
 	if err == nil {
@@ -121,21 +105,6 @@ func (s *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error
 	} else {
 		return s.SendCreateStudentMsg(ctx, stu)
 	}
-}
-
-func (s *StudentRepo) SendCreateStudentMsg(ctx context.Context, stu *biz.Student) error {
-	data, err := json.Marshal(stu)
-	if err != nil {
-		s.log.WithContext(ctx).Errorf("failed to marshal student data: %v", err)
-		return err
-	}
-	msg := &Msg{
-		Topic:     "student_create",
-		Body:      data,
-		Partition: 0,
-	}
-	//topicPartition := fmt.Sprintf("%s:%d", msg.Topic, msg.Partition)
-	return s.rdb.PushMsg(ctx, msg.Topic, msg.Body).Err()
 }
 
 func (s *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Student) error {
@@ -160,6 +129,10 @@ func (s *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Stud
 	if err := s.rdb.Del(ctx, listKey).Err(); err != nil {
 		return err
 	}
+	if err := s.SendCreateStudentMsg(ctx, stu); err != nil {
+		s.log.WithContext(ctx).Errorf("发送创建学生消息失败: %v", err)
+		return err
+	}
 	return nil
 }
 
@@ -176,7 +149,13 @@ func (s *StudentRepo) DeleteStudent(ctx context.Context, id int32) error {
 		tx.Rollback()
 		return err
 	}
-	return tx.Commit().Error
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+	if err := s.SendDeleteStudentMsg(ctx, id); err != nil {
+		return err
+	}
+	return nil
 }
 
 // RedisClient
@@ -220,8 +199,50 @@ func (s *StudentRepo) SendGetStudentMsg(ctx context.Context, id int32) error {
 		Body:      []byte(fmt.Sprintf("%d", id)),
 		Partition: 0,
 	}
-	topicPartition := fmt.Sprintf("%s:%d", msg.Topic, msg.Partition)
-	return s.rdb.PushMsg(ctx, topicPartition, msg.Body).Err()
+	//topicPartition := fmt.Sprintf("%s:%d", msg.Topic, msg.Partition)
+	return s.rdb.PushMsg(ctx, msg.Topic, msg.Body).Err()
+}
+
+func (s *StudentRepo) SendCreateStudentMsg(ctx context.Context, stu *biz.Student) error {
+	data, err := json.Marshal(stu)
+	if err != nil {
+		s.log.WithContext(ctx).Errorf("failed to marshal student data: %v", err)
+		return err
+	}
+	msg := &Msg{
+		Topic:     "student_create",
+		Body:      data,
+		Partition: 0,
+	}
+	return s.rdb.PushMsg(ctx, msg.Topic, msg.Body).Err()
+}
+
+func (s *StudentRepo) SendDeleteStudentMsg(ctx context.Context, id int32) error {
+	msg := &Msg{
+		Topic:     "student_delete",
+		Body:      []byte(fmt.Sprintf("%d", id)),
+		Partition: 0,
+	}
+	if err := s.rdb.PushMsg(ctx, msg.Topic, msg.Body).Err(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *StudentRepo) SendUpdateStudentMsg(ctx context.Context, stu *model.Student) error {
+	data, err := json.Marshal(stu)
+	if err != nil {
+		return err
+	}
+	msg := &Msg{
+		Topic:     "student_update",
+		Body:      data,
+		Partition: 0,
+	}
+	if err := s.rdb.PopMsg(ctx, 0, msg.Topic).Err(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *StudentRepo) ConsumeStudentCreateMsg(ctx context.Context) {
@@ -245,6 +266,53 @@ func (s *StudentRepo) ConsumeStudentCreateMsg(ctx context.Context) {
 	}
 }
 
+func (s *StudentRepo) ConsumeStudentDeleteMsg(ctx context.Context) {
+	topic := "student_delete"
+	for {
+		cmd := s.rdb.PopMsg(ctx, 0, topic)
+		messages, err := cmd.Result()
+		if err != nil {
+			if errors.Is(err, redis.Nil) {
+				s.log.WithContext(ctx).Info("No messages found")
+				time.Sleep(5 * time.Second)
+				continue
+			}
+			s.log.WithContext(ctx).Errorf("Error consuming messages: %v", err)
+			continue
+		}
+		for _, message := range messages[1:] {
+			id, err := strconv.ParseInt(message, 10, 32)
+			if err != nil {
+				s.log.WithContext(ctx).Errorf("Failed to parse student ID: %v", err)
+				continue
+			}
+			s.HandleDeleteStudentMsg(ctx, int32(id))
+		}
+		time.Sleep(10 * time.Second)
+	}
+}
+
+func (s *StudentRepo) ConsumeStudentUpdateMsg(ctx context.Context) error {
+	topic := "student_update"
+	for {
+		cmd := s.rdb.PopMsg(ctx, 0, topic)
+		messages, err := cmd.Result()
+		if err != nil {
+			if errors.Is(err, redis.Nil) {
+				s.log.WithContext(ctx).Info("No messages found")
+				time.Sleep(5 * time.Second)
+				continue
+			}
+			s.log.WithContext(ctx).Errorf("Error consuming messages: %v", err)
+			continue
+		}
+		for _, message := range messages[1:] {
+			s.HandleUpdateStudentMsg(ctx, message)
+		}
+		time.Sleep(10 * time.Second)
+	}
+}
+
 func (s *StudentRepo) HandleCreateStudentMsg(ctx context.Context, message string) {
 	var stu biz.Student
 	if err := json.Unmarshal([]byte(message), &stu); err != nil {
@@ -261,6 +329,32 @@ func (s *StudentRepo) HandleCreateStudentMsg(ctx context.Context, message string
 		return
 	}
 	s.log.WithContext(ctx).Info("Successfully created student.")
+}
+
+func (s *StudentRepo) HandleDeleteStudentMsg(ctx context.Context, id int32) {
+	var stu model.Student
+	if err := s.data.db.Where("id = ?", id).Delete(&stu).Error; err != nil {
+		s.log.WithContext(ctx).Errorf("Failed to delete student in database: %v", err)
+		return
+	}
+	s.log.WithContext(ctx).Info("Successfully deleted student.")
+}
+
+func (s *StudentRepo) HandleUpdateStudentMsg(ctx context.Context, message string) {
+	var stu biz.Student
+	if err := json.Unmarshal([]byte(message), &stu); err != nil {
+		s.log.WithContext(ctx).Errorf("Failed to unmarshal student data: %v", err)
+		return
+	}
+	modelStudent := &model.Student{
+		Name:   stu.Name,
+		Info:   stu.Info,
+		Status: stu.Status,
+	}
+	if err := s.data.db.Model(&model.Student{}).Updates(modelStudent).Error; err != nil {
+		return
+	}
+	s.log.WithContext(ctx).Info("Successfully updated student.")
 }
 
 func (s *StudentRepo) Consume(ctx context.Context, topic string, partition int, h Handler) error {

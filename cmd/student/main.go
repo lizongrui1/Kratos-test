@@ -47,6 +47,8 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, studentRepo *da
 	)
 	// 启动消费者来监听学生创建的消息
 	go studentRepo.ConsumeStudentCreateMsg(context.Background())
+	go studentRepo.ConsumeStudentDeleteMsg(context.Background())
+	go studentRepo.ConsumeStudentUpdateMsg(context.Background())
 	return app
 }
 
