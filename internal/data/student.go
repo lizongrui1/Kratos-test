@@ -23,7 +23,7 @@ type StudentRepo struct {
 	rdb  *RedisClient
 }
 
-func NewStudentRepo(data *Data, logger log.Logger, rdb *RedisClient) *StudentRepo {
+func NewStudentRepo(data *Data, logger log.Logger, rdb *RedisClient) biz.StudentRepo {
 	return &StudentRepo{
 		data: data,
 		log:  log.NewHelper(logger),
@@ -112,10 +112,10 @@ func (s *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Stud
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
-	if existStu.Name == stu.Name && existStu.Info == stu.Info && existStu.Status == stu.Status {
-		s.log.WithContext(ctx).Info("No changes detected")
-		return errors.New(400, "USER_IS_UPDATED", "该学生信息不需要修改")
-	}
+	//if existStu.Name == stu.Name && existStu.Info == stu.Info && existStu.Status == stu.Status {
+	//	s.log.WithContext(ctx).Info("No changes detected")
+	//	return errors.New(403, "USER_IS_UPDATED", "该学生信息不需要修改")
+	//}
 	tx := s.data.db.WithContext(ctx).Begin()
 	err = tx.Model(&model.Student{}).Where("id = ?", id).Updates(&model.Student{
 		Name:   stu.Name,
@@ -199,16 +199,6 @@ func (s *StudentRepo) GetStuByRdb(ctx context.Context, id int32) (*biz.Student, 
 		}
 	}
 	return &student, nil
-}
-
-func (s *StudentRepo) SendGetStudentMsg(ctx context.Context, id int32) error {
-	msg := &Msg{
-		Topic:     "student_create",
-		Body:      []byte(fmt.Sprintf("%d", id)),
-		Partition: 0,
-	}
-	//topicPartition := fmt.Sprintf("%s:%d", msg.Topic, msg.Partition)
-	return s.rdb.PushMsg(ctx, msg.Topic, msg.Body).Err()
 }
 
 func (s *StudentRepo) SendCreateStudentMsg(ctx context.Context, stu *biz.Student) error {
@@ -365,30 +355,4 @@ func (s *StudentRepo) HandleUpdateStudentMsg(ctx context.Context, message string
 		return
 	}
 	s.log.WithContext(ctx).Info("Successfully updated student.")
-}
-
-func (s *StudentRepo) Consume(ctx context.Context, topic string, partition int, h Handler) error {
-	for {
-		body, err := s.rdb.PopMsg(ctx, 2*time.Second, topic).Result()
-		if err != nil {
-			if errors.Is(err, redis.Nil) {
-				s.log.WithContext(ctx).Info("no message found")
-				time.Sleep(time.Second)
-				continue
-			}
-			s.log.WithContext(ctx).Info("consuming message error")
-			return err
-		}
-		for _, v := range body {
-			if err := h(&Msg{Topic: topic, Body: []byte(v), Partition: partition}); err != nil {
-				s.log.WithContext(ctx).Info("handle message error")
-				continue
-			}
-			if err := s.rdb.DeleteMessage(ctx, topic, v).Err(); err != nil {
-				s.log.WithContext(ctx).Info("delete message error")
-				continue
-			}
-			s.log.WithContext(ctx).Info("message processed and deleted")
-		}
-	}
 }

@@ -33,7 +33,6 @@ type StudentRepo interface {
 
 	//redis
 	GetStuByRdb(ctx context.Context, id int32) (*Student, error)
-	SendGetStudentMsg(ctx context.Context, id int32) error
 	SendCreateStudentMsg(ctx context.Context, stu *Student) error
 	ConsumeStudentCreateMsg(ctx context.Context)
 	HandleCreateStudentMsg(ctx context.Context, message string)
@@ -48,11 +47,10 @@ type StudentRepo interface {
 type StudentUsecase struct {
 	repo StudentRepo
 	log  *log.Helper
-	rdb  RedisClient
 }
 
-func NewStudentUsecase(repo StudentRepo, rdb RedisClient, logger log.Logger) *StudentUsecase {
-	return &StudentUsecase{repo: repo, rdb: rdb, log: log.NewHelper(logger)}
+func NewStudentUsecase(repo StudentRepo, logger log.Logger) *StudentUsecase {
+	return &StudentUsecase{repo: repo, log: log.NewHelper(logger)}
 }
 
 type RedisClient interface {

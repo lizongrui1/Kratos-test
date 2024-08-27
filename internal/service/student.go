@@ -4,7 +4,6 @@ import (
 	"context"
 	pb "student/api/student/v1"
 	"student/internal/biz"
-	"student/internal/data"
 
 	"github.com/go-kratos/kratos/v2/log"
 )
@@ -13,7 +12,6 @@ type StudentService struct {
 	pb.UnimplementedStudentServer
 	log *log.Helper
 	stu *biz.StudentUsecase
-	rdb data.RedisClientRepo
 }
 
 func NewStudentService(stu *biz.StudentUsecase, logger log.Logger) *StudentService {

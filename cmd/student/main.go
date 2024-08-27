@@ -4,8 +4,7 @@ import (
 	"context"
 	"flag"
 	"os"
-	"student/internal/data"
-
+	"student/internal/biz"
 	"student/internal/conf"
 
 	"github.com/go-kratos/kratos/v2"
@@ -34,7 +33,7 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
-func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, studentRepo *data.StudentRepo) *kratos.App {
+func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, studentRepo biz.StudentRepo) *kratos.App {
 	app := kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -46,10 +45,11 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, studentRepo *da
 			hs,
 		),
 	)
+	ctx := context.Background()
 	// 启动消费者来监听学生创建的消息
-	go studentRepo.ConsumeStudentCreateMsg(context.Background())
-	go studentRepo.ConsumeStudentDeleteMsg(context.Background())
-	go studentRepo.ConsumeStudentUpdateMsg(context.Background())
+	go studentRepo.ConsumeStudentCreateMsg(ctx)
+	go studentRepo.ConsumeStudentDeleteMsg(ctx)
+	go studentRepo.ConsumeStudentUpdateMsg(ctx)
 	return app
 }
 
@@ -80,7 +80,7 @@ func main() {
 		panic(err)
 	}
 
-	app, cleanup, _, err := wireApp(bc.Server, bc.Data, logger)
+	app, cleanup, err := wireApp(bc.Server, bc.Data, logger)
 	if err != nil {
 		panic(err)
 	}
