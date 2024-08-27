@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-kratos/kratos/v2/errors"
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 	"strconv"
 	"student/internal/biz"
 	"student/internal/data/model"
 	"time"
+
+	"github.com/go-kratos/kratos/v2/errors"
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
 var _ biz.RedisClient = (*RedisClient)(nil)
@@ -106,8 +107,17 @@ func (s *StudentRepo) CreateStudent(ctx context.Context, stu *biz.Student) error
 }
 
 func (s *StudentRepo) UpdateStudent(ctx context.Context, id int32, stu *biz.Student) error {
+	var existStu model.Student
+	err := s.data.db.WithContext(ctx).Where("name = ?", stu.Name).First(&existStu).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	if existStu.Name == stu.Name && existStu.Info == stu.Info && existStu.Status == stu.Status {
+		s.log.WithContext(ctx).Info("No changes detected")
+		return errors.New(400, "USER_IS_UPDATED", "该学生信息不需要修改")
+	}
 	tx := s.data.db.WithContext(ctx).Begin()
-	err := tx.Model(&model.Student{}).Where("id = ?", id).Updates(&model.Student{
+	err = tx.Model(&model.Student{}).Where("id = ?", id).Updates(&model.Student{
 		Name:   stu.Name,
 		Info:   stu.Info,
 		Status: stu.Status,
@@ -351,7 +361,7 @@ func (s *StudentRepo) HandleUpdateStudentMsg(ctx context.Context, message string
 		Info:   stu.Info,
 		Status: stu.Status,
 	}
-	if err := s.data.db.Model(&model.Student{}).Updates(modelStudent).Error; err != nil {
+	if err := s.data.db.Model(&model.Student{}).Where("id = ?", stu.ID).Updates(modelStudent).Error; err != nil {
 		return
 	}
 	s.log.WithContext(ctx).Info("Successfully updated student.")

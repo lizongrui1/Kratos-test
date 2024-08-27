@@ -2,10 +2,11 @@ package service
 
 import (
 	"context"
-	"github.com/go-kratos/kratos/v2/log"
 	pb "student/api/student/v1"
 	"student/internal/biz"
 	"student/internal/data"
+
+	"github.com/go-kratos/kratos/v2/log"
 )
 
 type StudentService struct {
@@ -36,7 +37,6 @@ func (s *StudentService) ListStudent(ctx context.Context, req *pb.ListStudentReq
 		}
 		studentInfos = append(studentInfos, studentInfo)
 	}
-
 	return &pb.ListStudentReply{
 		Student: studentInfos,
 	}, nil

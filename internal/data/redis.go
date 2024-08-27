@@ -2,11 +2,11 @@ package data
 
 import (
 	"context"
-	"fmt"
+	"time"
+
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/redis/go-redis/v9"
-	"time"
 )
 
 type RedisClient struct {
@@ -37,7 +37,6 @@ type RedisClientRepo interface {
 	PushMsg(ctx context.Context, key string, values ...interface{}) *redis.IntCmd
 	PopMsg(ctx context.Context, timeout time.Duration, keys ...string) *redis.StringSliceCmd
 	DeleteMessage(ctx context.Context, key, value string) *redis.IntCmd
-	SendMsg(ctx context.Context, msg *Msg) error
 }
 
 func (r *RedisClient) Get(ctx context.Context, key string) (string, error) {
@@ -70,9 +69,4 @@ func (r *RedisClient) PopMsg(ctx context.Context, timeout time.Duration, keys ..
 
 func (r *RedisClient) DeleteMessage(ctx context.Context, key, value string) *redis.IntCmd {
 	return r.rdb.LRem(ctx, key, 1, value)
-}
-
-func (r *RedisClient) SendMsg(ctx context.Context, msg *Msg) error {
-	topicPartition := fmt.Sprintf("%s:%d", msg.Topic, msg.Partition)
-	return r.PushMsg(ctx, topicPartition, msg.Body).Err()
 }
