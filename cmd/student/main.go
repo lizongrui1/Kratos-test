@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"student/internal/biz"
@@ -38,21 +38,44 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
+//func fetchData(url string, target interface{}) error {
+//	resp, err := http.Get(url)
+//	if err != nil {
+//		return err
+//	}
+//	defer resp.Body.Close()
+//
+//	if resp.StatusCode != http.StatusOK {
+//		return fmt.Errorf("failed to fetch data: status code %d", resp.StatusCode)
+//	}
+//
+//	body, err := io.ReadAll(resp.Body)
+//	if err != nil {
+//		return err
+//	}
+//	return json.Unmarshal(body, target)
+//}
+
 func fetchData(url string, target interface{}) error {
-	resp, err := http.Get(url)
+	client := &http.Client{} // 创建一个独立的 HTTP 客户端
+	resp, err := client.Get(url)
 	if err != nil {
+		log.Errorf("Error making GET request to %s: %v", url, err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		log.Errorf("Non-OK HTTP status: %d from %s", resp.StatusCode, url)
 		return fmt.Errorf("failed to fetch data: status code %d", resp.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Errorf("Error reading response body from %s: %v", url, err)
 		return err
 	}
+	log.Infof("Successfully fetched data from %s: %s", url, string(body))
 	return json.Unmarshal(body, target)
 }
 
@@ -84,16 +107,37 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *kratosHttp.Server, studentRe
 		var bData Message
 		var cData Score
 
-		err := fetchData(serviceBUrl, &bData)
-		if err != nil {
-			http.Error(w, "Failed to fetch data from service B", http.StatusInternalServerError)
-			return
-		}
+		//err := fetchData(serviceBUrl, &bData)
+		//if err != nil {
+		//	http.Error(w, "Failed to fetch data from service B", http.StatusInternalServerError)
+		//	return
+		//}
+		//
+		//err = fetchData(serviceCUrl, &cData)
+		//if err != nil {
+		//	http.Error(w, "Failed to fetch data from service C", http.StatusInternalServerError)
+		//	return
+		//}
 
-		err = fetchData(serviceCUrl, &cData)
-		if err != nil {
-			http.Error(w, "Failed to fetch data from service C", http.StatusInternalServerError)
-			return
+		// 使用通道（channels）来处理并发请求
+		errChan := make(chan error, 2)
+
+		// 并发请求 serviceB
+		go func() {
+			errChan <- fetchData(serviceBUrl, &bData)
+		}()
+
+		// 并发请求 serviceC
+		go func() {
+			errChan <- fetchData(serviceCUrl, &cData)
+		}()
+
+		// 等待两个请求完成
+		for i := 0; i < 2; i++ {
+			if err := <-errChan; err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 		combined := map[string]interface{}{

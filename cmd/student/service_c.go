@@ -11,7 +11,6 @@ import (
 )
 
 type Score struct {
-	ID    int `json:"id"`
 	Score int `json:"score"`
 }
 
