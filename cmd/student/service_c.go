@@ -26,8 +26,11 @@ func getScore(db *data.Data) http.HandlerFunc {
 			}
 			return
 		}
+		response := Score{
+			Score: int(score),
+		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(score)
+		json.NewEncoder(w).Encode(response)
 	}
 }
 

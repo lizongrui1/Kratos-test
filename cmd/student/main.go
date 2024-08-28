@@ -104,7 +104,7 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *kratosHttp.Server, studentRe
 		}
 		serviceBUrl := "http://localhost:8081/serviceB?id=" + id
 		serviceCUrl := "http://localhost:8082/serviceC?id=" + id
-		var bData Message
+		var bData []Message
 		var cData Score
 
 		//err := fetchData(serviceBUrl, &bData)
@@ -140,10 +140,16 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *kratosHttp.Server, studentRe
 			}
 		}
 
+		if len(bData) == 0 {
+			http.Error(w, "No data returned from service B", http.StatusNotFound)
+			return
+		}
+		firstMessage := bData[0]
+
 		combined := map[string]interface{}{
-			"name":   bData.Name,
-			"info":   bData.Info,
-			"status": bData.Status,
+			"name":   firstMessage.Name,
+			"info":   firstMessage.Info,
+			"status": firstMessage.Status,
 			"score":  cData.Score,
 		}
 
