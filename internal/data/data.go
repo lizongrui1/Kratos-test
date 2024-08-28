@@ -22,6 +22,10 @@ type Data struct {
 	db *gorm.DB
 }
 
+func (d *Data) DB() *gorm.DB {
+	return d.db
+}
+
 // NewRdb 初始化 redis
 func NewRdb(c *conf.Data, logger log.Logger) *redis.Client {
 	l := log.NewHelper(log.With(logger, "module", "data/NewRdb"))

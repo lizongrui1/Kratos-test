@@ -2,10 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"student/internal/biz"
 	"student/internal/conf"
+	"student/internal/data"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
@@ -13,7 +18,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
-	"github.com/go-kratos/kratos/v2/transport/http"
+	kratosHttp "github.com/go-kratos/kratos/v2/transport/http"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -33,7 +38,25 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
-func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, studentRepo biz.StudentRepo) *kratos.App {
+func fetchData(url string, target interface{}) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to fetch data: status code %d", resp.StatusCode)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(body, target)
+}
+
+func newApp(logger log.Logger, gs *grpc.Server, hs *kratosHttp.Server, studentRepo biz.StudentRepo) *kratos.App {
 	app := kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -45,15 +68,49 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, studentRepo biz
 			hs,
 		),
 	)
+
 	ctx := context.Background()
-	// 启动消费者来监听学生创建的消息
 	go studentRepo.ConsumeStudentCreateMsg(ctx)
 	go studentRepo.ConsumeStudentDeleteMsg(ctx)
 	go studentRepo.ConsumeStudentUpdateMsg(ctx)
+	hs.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			http.Error(w, "Missing id parameter", http.StatusBadRequest)
+			return
+		}
+		serviceBUrl := "http://localhost:8081/serviceB?id=" + id
+		serviceCUrl := "http://localhost:8082/serviceC?id=" + id
+		var bData Message
+		var cData Score
+
+		err := fetchData(serviceBUrl, &bData)
+		if err != nil {
+			http.Error(w, "Failed to fetch data from service B", http.StatusInternalServerError)
+			return
+		}
+
+		err = fetchData(serviceCUrl, &cData)
+		if err != nil {
+			http.Error(w, "Failed to fetch data from service C", http.StatusInternalServerError)
+			return
+		}
+
+		combined := map[string]interface{}{
+			"name":   bData.Name,
+			"info":   bData.Info,
+			"status": bData.Status,
+			"score":  cData.Score,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(combined)
+	})
 	return app
 }
 
 func main() {
+
 	flag.Parse()
 	logger := log.With(log.NewStdLogger(os.Stdout),
 		"ts", log.DefaultTimestamp,
@@ -79,6 +136,16 @@ func main() {
 	if err := c.Scan(&bc); err != nil {
 		panic(err)
 	}
+
+	// 初始化数据库连接
+	db, cleanup, err := data.NewData(logger, bc.Data)
+	if err != nil {
+		panic(err)
+	}
+	defer cleanup()
+
+	go serviceB(db)
+	go serviceC(db)
 
 	app, cleanup, err := wireApp(bc.Server, bc.Data, logger)
 	if err != nil {

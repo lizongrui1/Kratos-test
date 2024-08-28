@@ -9,6 +9,7 @@ type Student struct {
 	Name      string    `json:"name" gorm:"column:name"`
 	Info      string    `json:"info" gorm:"column:info"`
 	Status    int32     `json:"status" gorm:"column:status"`
+	Score     int32     `json:"score" gorm:"column:score"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"column:updated_at"`
 	CreatedAt time.Time `json:"created_at" gorm:"column:created_at"`
 }
