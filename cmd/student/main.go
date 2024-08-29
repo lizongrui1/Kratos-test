@@ -11,6 +11,8 @@ import (
 	"student/internal/biz"
 	"student/internal/conf"
 	"student/internal/data"
+	"student/internal/service"
+	"sync"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
@@ -38,26 +40,9 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
-//func fetchData(url string, target interface{}) error {
-//	resp, err := http.Get(url)
-//	if err != nil {
-//		return err
-//	}
-//	defer resp.Body.Close()
-//
-//	if resp.StatusCode != http.StatusOK {
-//		return fmt.Errorf("failed to fetch data: status code %d", resp.StatusCode)
-//	}
-//
-//	body, err := io.ReadAll(resp.Body)
-//	if err != nil {
-//		return err
-//	}
-//	return json.Unmarshal(body, target)
-//}
+var client = &http.Client{}
 
 func fetchData(url string, target interface{}) error {
-	client := &http.Client{} // 创建一个独立的 HTTP 客户端
 	resp, err := client.Get(url)
 	if err != nil {
 		log.Errorf("Error making GET request to %s: %v", url, err)
@@ -66,8 +51,7 @@ func fetchData(url string, target interface{}) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Errorf("Non-OK HTTP status: %d from %s", resp.StatusCode, url)
-		return fmt.Errorf("failed to fetch data: status code %d", resp.StatusCode)
+		return fmt.Errorf("record not found")
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -104,37 +88,39 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *kratosHttp.Server, studentRe
 		}
 		serviceBUrl := "http://localhost:8081/serviceB?id=" + id
 		serviceCUrl := "http://localhost:8082/serviceC?id=" + id
-		var bData []Message
-		var cData Score
+		var bData []service.Message
+		var cData service.Score
 
 		//err := fetchData(serviceBUrl, &bData)
 		//if err != nil {
 		//	http.Error(w, "Failed to fetch data from service B", http.StatusInternalServerError)
 		//	return
 		//}
-		//
 		//err = fetchData(serviceCUrl, &cData)
 		//if err != nil {
 		//	http.Error(w, "Failed to fetch data from service C", http.StatusInternalServerError)
 		//	return
 		//}
 
-		// 使用通道（channels）来处理并发请求
-		errChan := make(chan error, 2)
-
-		// 并发请求 serviceB
+		var wg sync.WaitGroup
+		errorChan := make(chan error, 2)
+		wg.Add(2)
 		go func() {
-			errChan <- fetchData(serviceBUrl, &bData)
+			defer wg.Done()
+			errorChan <- fetchData(serviceBUrl, &bData)
+		}()
+		go func() {
+			defer wg.Done()
+			errorChan <- fetchData(serviceCUrl, &cData)
 		}()
 
-		// 并发请求 serviceC
 		go func() {
-			errChan <- fetchData(serviceCUrl, &cData)
+			wg.Wait()
+			close(errorChan)
 		}()
 
-		// 等待两个请求完成
-		for i := 0; i < 2; i++ {
-			if err := <-errChan; err != nil {
+		for err := range errorChan {
+			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -147,11 +133,21 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *kratosHttp.Server, studentRe
 		firstMessage := bData[0]
 
 		combined := map[string]interface{}{
+			"id":     firstMessage.ID,
 			"name":   firstMessage.Name,
 			"info":   firstMessage.Info,
 			"status": firstMessage.Status,
 			"score":  cData.Score,
 		}
+
+		log.NewHelper(logger).Info(fmt.Sprintf(
+			"Query successful: ID: %d, Name: %s, Info: %s, Status: %s, Score: %d",
+			firstMessage.ID,
+			firstMessage.Name,
+			firstMessage.Info,
+			firstMessage.Status,
+			cData.Score,
+		))
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(combined)
@@ -187,15 +183,14 @@ func main() {
 		panic(err)
 	}
 
-	// 初始化数据库连接
 	db, cleanup, err := data.NewData(logger, bc.Data)
 	if err != nil {
 		panic(err)
 	}
 	defer cleanup()
 
-	go serviceB(db)
-	go serviceC(db)
+	go service.ServiceB(db)
+	go service.ServiceC(db)
 
 	app, cleanup, err := wireApp(bc.Server, bc.Data, logger)
 	if err != nil {

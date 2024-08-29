@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"encoding/json"
@@ -35,7 +35,7 @@ func getData(db *data.Data) http.HandlerFunc {
 	}
 }
 
-func serviceB(db *data.Data) {
+func ServiceB(db *data.Data) {
 	http.HandleFunc("/serviceB", getData(db))
 	http.ListenAndServe(":8081", nil)
 }
