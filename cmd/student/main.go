@@ -114,18 +114,18 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *kratosHttp.Server, studentRe
 			errorChan <- fetchData(serviceCUrl, &cData)
 		}()
 
-		go func() {
-			wg.Wait()
-			close(errorChan)
-		}()
-
+		//go func() {
+		//	wg.Wait()
+		//	close(errorChan)
+		//}()
+		wg.Wait()
 		for err := range errorChan {
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 		}
-
+		close(errorChan)
 		if len(bData) == 0 {
 			http.Error(w, "No data returned from service B", http.StatusNotFound)
 			return
