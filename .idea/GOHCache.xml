@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GoORMHelperCache">
+    <option name="schemaMapping">
+      <map>
+        <entry key="Bootstrap">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/conf/conf.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="CreateStudentReply">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="CreateStudentRequest">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Data">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/conf/conf.pb.go" />
+              <option value="file://$PROJECT_DIR$/internal/data/data.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Data_Database">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/conf/conf.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Data_Redis">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/conf/conf.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Data_RedisCache">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/conf/conf.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="DeleteStudentReply">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="DeleteStudentRequest">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="GetStudentReply">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="GetStudentRequest">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Info">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/student/service_b.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="InfoStatus">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/student/service_b.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="ListStudentReply">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="ListStudentRequest">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Message">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/student/service_b.go" />
+              <option value="file://$PROJECT_DIR$/internal/service/service_b.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Msg">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/data/redis.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="RedisClient">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/data/redis.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Score">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/student/service_c.go" />
+              <option value="file://$PROJECT_DIR$/internal/service/service_c.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Server">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/conf/conf.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Server_GRPC">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/conf/conf.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Server_HTTP">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/conf/conf.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Student">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/biz/student.go" />
+              <option value="file://$PROJECT_DIR$/internal/data/model/student.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="StudentHTTPClientImpl">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student_http.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="StudentInfo">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="StudentRepo">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/data/student.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="StudentService">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/service/student.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="StudentUsecase">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/biz/student.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="Trace">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/internal/conf/conf.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="UnimplementedStudentServer">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student_grpc.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="UpdateStudentReply">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="UpdateStudentRequest">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="studentClient">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/student_grpc.pb.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="x">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/api/student/v1/error_reason.pb.go" />
+              <option value="file://$PROJECT_DIR$/api/student/v1/student.pb.go" />
+              <option value="file://$PROJECT_DIR$/internal/conf/conf.pb.go" />
+            </set>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="scannedPathMapping">
+      <map>
+        <entry key="file://$PROJECT_DIR$/api/student/v1/error_reason.pb.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724309595000" />
+              <option name="schema">
+                <list>
+                  <option value="x" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/api/student/v1/student.pb.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724309595000" />
+              <option name="schema">
+                <list>
+                  <option value="StudentInfo" />
+                  <option value="GetStudentRequest" />
+                  <option value="GetStudentReply" />
+                  <option value="CreateStudentRequest" />
+                  <option value="CreateStudentReply" />
+                  <option value="UpdateStudentRequest" />
+                  <option value="UpdateStudentReply" />
+                  <option value="DeleteStudentRequest" />
+                  <option value="DeleteStudentReply" />
+                  <option value="ListStudentRequest" />
+                  <option value="ListStudentReply" />
+                  <option value="x" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/api/student/v1/student_grpc.pb.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724309595000" />
+              <option name="schema">
+                <list>
+                  <option value="studentClient" />
+                  <option value="UnimplementedStudentServer" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/api/student/v1/student_http.pb.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724309595000" />
+              <option name="schema">
+                <list>
+                  <option value="StudentHTTPClientImpl" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/student/main.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724920457119" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/student/service_b.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724851758997" />
+              <option name="schema">
+                <list>
+                  <option value="Message" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/student/service_c.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724854592733" />
+              <option name="schema">
+                <list>
+                  <option value="Score" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/student/wire.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724750021119" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/student/wire_gen.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724751836293" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/biz/biz.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724145055000" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/biz/student.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724749279473" />
+              <option name="schema">
+                <list>
+                  <option value="Student" />
+                  <option value="StudentUsecase" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/conf/conf.pb.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724120243000" />
+              <option name="schema">
+                <list>
+                  <option value="Bootstrap" />
+                  <option value="Server" />
+                  <option value="Data" />
+                  <option value="Trace" />
+                  <option value="Server_HTTP" />
+                  <option value="Server_GRPC" />
+                  <option value="Data_Database" />
+                  <option value="Data_Redis" />
+                  <option value="Data_RedisCache" />
+                  <option value="x" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/data/NewRdb_test.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724124371000" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/data/data.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724838516432" />
+              <option name="schema">
+                <list>
+                  <option value="Data" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/data/model/student.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724827768814" />
+              <option name="schema">
+                <list>
+                  <option value="Student" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/data/redis.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724725880965" />
+              <option name="schema">
+                <list>
+                  <option value="RedisClient" />
+                  <option value="Msg" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/data/student.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724764020224" />
+              <option name="schema">
+                <list>
+                  <option value="StudentRepo" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/server/consumer.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724655463942" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/server/grpc.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1723805268000" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/server/http.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724916029934" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/server/server.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1723710075000" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/service/service.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1723710803000" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/service/service_b.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724911175097" />
+              <option name="schema">
+                <list>
+                  <option value="Message" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/service/service_c.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724911175121" />
+              <option name="schema">
+                <list>
+                  <option value="Score" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/internal/service/student.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1724834914611" />
+              <option name="schema">
+                <list>
+                  <option value="StudentService" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="tableStructMapping">
+      <map>
+        <entry key="bootstrap" value="Bootstrap" />
+        <entry key="create_student_reply" value="CreateStudentReply" />
+        <entry key="create_student_request" value="CreateStudentRequest" />
+        <entry key="data" value="Data" />
+        <entry key="data__database" value="Data_Database" />
+        <entry key="data__redis" value="Data_Redis" />
+        <entry key="data__redis_cache" value="Data_RedisCache" />
+        <entry key="delete_student_reply" value="DeleteStudentReply" />
+        <entry key="delete_student_request" value="DeleteStudentRequest" />
+        <entry key="get_student_reply" value="GetStudentReply" />
+        <entry key="get_student_request" value="GetStudentRequest" />
+        <entry key="info" value="Info" />
+        <entry key="info_status" value="InfoStatus" />
+        <entry key="list_student_reply" value="ListStudentReply" />
+        <entry key="list_student_request" value="ListStudentRequest" />
+        <entry key="message" value="Message" />
+        <entry key="msg" value="Msg" />
+        <entry key="redis_client" value="RedisClient" />
+        <entry key="score" value="Score" />
+        <entry key="server" value="Server" />
+        <entry key="server_grpc" value="Server_GRPC" />
+        <entry key="server_http" value="Server_HTTP" />
+        <entry key="student" value="Student" />
+        <entry key="student_client" value="studentClient" />
+        <entry key="student_http_client_impl" value="StudentHTTPClientImpl" />
+        <entry key="student_info" value="StudentInfo" />
+        <entry key="student_repo" value="StudentRepo" />
+        <entry key="student_service" value="StudentService" />
+        <entry key="student_usecase" value="StudentUsecase" />
+        <entry key="trace" value="Trace" />
+        <entry key="unimplemented_student_server" value="UnimplementedStudentServer" />
+        <entry key="update_student_reply" value="UpdateStudentReply" />
+        <entry key="update_student_request" value="UpdateStudentRequest" />
+        <entry key="x" value="x" />
+      </map>
+    </option>
+    <option name="lastTimeChecked" value="1724727650579" />
+  </component>
+</project>
